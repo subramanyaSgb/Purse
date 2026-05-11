@@ -16,10 +16,15 @@
     "jsx": "react-jsx",
 
     /* Linting */
+    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "noImplicitOverride": true,
     "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    /* Path alias (TS 6+: no baseUrl needed; resolved relative to tsconfig) */
+    "paths": { "@/*": ["./src/*"] }
   },
   "include": ["src"]
 }
