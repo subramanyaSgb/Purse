@@ -1,15 +1,15 @@
 # Purse — Design Document
 
-| | |
-|---|---|
-| **Project** | Purse — a local-first personal finance PWA |
-| **Repository** | https://github.com/subramanyaSgb/Purse |
-| **Hosting** | Vercel (static) — GitHub-connected continuous deploy |
-| **Status** | Design complete, ready for implementation planning |
-| **Author** | Subramanya Bellary (`subramanya.bellary@deeviasoftware.com`) |
-| **Brainstormed with** | Claude (Opus 4.7) |
-| **Date** | 2026-05-11 |
-| **Schema version** | 1 |
+|                       |                                                              |
+| --------------------- | ------------------------------------------------------------ |
+| **Project**           | Purse — a local-first personal finance PWA                   |
+| **Repository**        | https://github.com/subramanyaSgb/Purse                       |
+| **Hosting**           | Vercel (static) — GitHub-connected continuous deploy         |
+| **Status**            | Design complete, ready for implementation planning           |
+| **Author**            | Subramanya Bellary (`subramanya.bellary@deeviasoftware.com`) |
+| **Brainstormed with** | Claude (Opus 4.7)                                            |
+| **Date**              | 2026-05-11                                                   |
+| **Schema version**    | 1                                                            |
 
 ---
 
@@ -64,20 +64,20 @@ The repository layer is designed so a server adapter can be added later without 
 
 ## 3. Tech stack
 
-| Layer | Choice |
-|---|---|
-| Framework | React 18 + Vite + TypeScript (strict) |
-| Routing | React Router (4 tab routes + modal routes) |
-| State | React Query for repo reads; Zustand for UI/form state |
-| Data | Dexie 4 (IndexedDB wrapper) for structured rows |
-| Files | OPFS (`navigator.storage.getDirectory()`) for image blobs |
-| Styling | Tailwind CSS + shadcn/ui (Radix-based components) |
-| Charts | Recharts |
-| Maps | Leaflet + OpenStreetMap tiles |
-| PWA | `vite-plugin-pwa` (Workbox) with `autoUpdate` |
-| Tests | Vitest + React Testing Library + fake-indexeddb + Playwright |
-| Lint/format | ESLint + Prettier; commit-time `lint-staged` |
-| CI/CD | GitHub Actions → Vercel preview + production deploy |
+| Layer       | Choice                                                       |
+| ----------- | ------------------------------------------------------------ |
+| Framework   | React 18 + Vite + TypeScript (strict)                        |
+| Routing     | React Router (4 tab routes + modal routes)                   |
+| State       | React Query for repo reads; Zustand for UI/form state        |
+| Data        | Dexie 4 (IndexedDB wrapper) for structured rows              |
+| Files       | OPFS (`navigator.storage.getDirectory()`) for image blobs    |
+| Styling     | Tailwind CSS + shadcn/ui (Radix-based components)            |
+| Charts      | Recharts                                                     |
+| Maps        | Leaflet + OpenStreetMap tiles                                |
+| PWA         | `vite-plugin-pwa` (Workbox) with `autoUpdate`                |
+| Tests       | Vitest + React Testing Library + fake-indexeddb + Playwright |
+| Lint/format | ESLint + Prettier; commit-time `lint-staged`                 |
+| CI/CD       | GitHub Actions → Vercel preview + production deploy          |
 
 All client-side. No environment variables. No secrets.
 
@@ -198,14 +198,15 @@ Seven tables. UUIDs everywhere (`crypto.randomUUID()`). Soft-deletes via `archiv
 
 ```ts
 db.version(1).stores({
-  accounts:        'id, name, type, archivedAt',
-  categories:      'id, name, kind, archivedAt',
-  subcategories:   'id, categoryId, name, archivedAt',
-  tags:            'id, &nameLower, lastUsedAt',
-  places:          'id, name, lastUsedAt',
-  paymentMethods:  'id, name, kind, archivedAt',
-  transactions:    'id, occurredAt, accountId, toAccountId, categoryId, subcategoryId, placeId, paymentMethodId, *tagIds, kind, [kind+occurredAt], [accountId+occurredAt]',
-  appMeta:         'id',
+  accounts: 'id, name, type, archivedAt',
+  categories: 'id, name, kind, archivedAt',
+  subcategories: 'id, categoryId, name, archivedAt',
+  tags: 'id, &nameLower, lastUsedAt',
+  places: 'id, name, lastUsedAt',
+  paymentMethods: 'id, name, kind, archivedAt',
+  transactions:
+    'id, occurredAt, accountId, toAccountId, categoryId, subcategoryId, placeId, paymentMethodId, *tagIds, kind, [kind+occurredAt], [accountId+occurredAt]',
+  appMeta: 'id',
 });
 ```
 
@@ -263,18 +264,18 @@ Vertically stacked, scrollable:
 - **Step 1**: segmented control — `Expense* · Income · Transfer`.
 - **Step 2**: form by kind (see table below). Date/time auto-fills to now; editable.
 
-| Field | Expense | Income | Transfer |
-|---|---|---|---|
-| Amount (required) | ✓ | ✓ | ✓ |
-| Date/time (auto-now, editable) | ✓ | ✓ | ✓ |
-| From account (required) | ✓ | ✓ | ✓ |
-| To account (required) | – | – | ✓ |
-| Category → Subcategory | ✓ | ✓ | – |
-| Note ("Details") | ✓ | ✓ | ✓ |
-| Payment method | ✓ | ✓ | ✓ |
-| Place (auto-GPS suggest + create) | ✓ | – | – |
-| Tags (multi, autocomplete-or-create) | ✓ | ✓ | ✓ |
-| Images (camera/gallery, multi) | ✓ | ✓ | – |
+| Field                                | Expense | Income | Transfer |
+| ------------------------------------ | ------- | ------ | -------- |
+| Amount (required)                    | ✓       | ✓      | ✓        |
+| Date/time (auto-now, editable)       | ✓       | ✓      | ✓        |
+| From account (required)              | ✓       | ✓      | ✓        |
+| To account (required)                | –       | –      | ✓        |
+| Category → Subcategory               | ✓       | ✓      | –        |
+| Note ("Details")                     | ✓       | ✓      | ✓        |
+| Payment method                       | ✓       | ✓      | ✓        |
+| Place (auto-GPS suggest + create)    | ✓       | –      | –        |
+| Tags (multi, autocomplete-or-create) | ✓       | ✓      | ✓        |
+| Images (camera/gallery, multi)       | ✓       | ✓      | –        |
 
 - **Office category auto-rule**: when user picks an Office category on an Expense, the app silently adds tag `reimburse-pending`. User can remove it.
 - **Save button** sticky at sheet bottom. Cancel discards draft (form state ephemeral).
@@ -309,10 +310,10 @@ Grouped, iOS-style sections:
 
 ### 6.1 Two stores
 
-| Store | What lives there | Why |
-|---|---|---|
-| Dexie (IndexedDB) | Every row in §4.1 schema | Indexed, queryable, transactional |
-| OPFS | Image blobs (`txn/<uuid>/N.jpg` + `thumb_N.jpg`) | Better large-blob handling; less likely to be wiped by routine browser cleanup than IndexedDB blob storage |
+| Store             | What lives there                                 | Why                                                                                                        |
+| ----------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Dexie (IndexedDB) | Every row in §4.1 schema                         | Indexed, queryable, transactional                                                                          |
+| OPFS              | Image blobs (`txn/<uuid>/N.jpg` + `thumb_N.jpg`) | Better large-blob handling; less likely to be wiped by routine browser cleanup than IndexedDB blob storage |
 
 ### 6.2 Image pipeline
 
@@ -351,7 +352,7 @@ Today these wrap Dexie. To add cloud sync tomorrow, a single new `RemoteTxRepo` 
 
 - Schema changes use Dexie's `db.version(N).upgrade(tx => …)` ladder.
 - `appMeta.schemaVersion` lives in the database; bumped on each migration.
-- Backup JSON carries `schemaVersion`. Import refuses backups with a *newer* version than the running build.
+- Backup JSON carries `schemaVersion`. Import refuses backups with a _newer_ version than the running build.
 
 ---
 
@@ -362,7 +363,7 @@ Today these wrap Dexie. To add cloud sync tomorrow, a single new `RemoteTxRepo` 
 - `vite-plugin-pwa` generates `manifest.webmanifest`, icons (192/512/maskable), and service worker.
 - `display: standalone`, `theme_color` from Tailwind primary, `background_color` matches splash.
 - App shell precached at install; ~300 KB gzip bundle target.
-- `registerType: 'autoUpdate'` + skip-waiting toast: *"New version available — refresh"*.
+- `registerType: 'autoUpdate'` + skip-waiting toast: _"New version available — refresh"_.
 - Vercel headers (`vercel.json`):
   - `/index.html`, `/sw.js`, `/manifest.webmanifest` → `Cache-Control: no-cache`.
   - `/assets/*` (hashed) → `Cache-Control: public, max-age=31536000, immutable`.
@@ -400,11 +401,11 @@ A small pyramid weighted to fast tests at the bottom.
 
 ### 8.1 Tooling
 
-| Layer | Tool |
-|---|---|
-| Unit (logic / repo) | Vitest + `fake-indexeddb` |
-| Component | Vitest + React Testing Library (`jsdom`) |
-| End-to-end | Playwright (real Chromium) |
+| Layer               | Tool                                     |
+| ------------------- | ---------------------------------------- |
+| Unit (logic / repo) | Vitest + `fake-indexeddb`                |
+| Component           | Vitest + React Testing Library (`jsdom`) |
+| End-to-end          | Playwright (real Chromium)               |
 
 ### 8.2 Layer 1 — Repository (highest value)
 
@@ -486,14 +487,15 @@ A failing step blocks Vercel deploy (Vercel waits on the GitHub commit status).
 {
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
-    { "source": "/sw.js",                "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
-    { "source": "/index.html",           "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
-    { "source": "/manifest.webmanifest", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/index.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    },
     {
       "source": "/(.*)",
-      "headers": [
-        { "key": "Permissions-Policy", "value": "geolocation=(self), camera=(self)" }
-      ]
+      "headers": [{ "key": "Permissions-Policy", "value": "geolocation=(self), camera=(self)" }]
     }
   ]
 }
@@ -525,50 +527,50 @@ All categories are nested (Category → Subcategory). Icons (lucide) and colours
 
 ### Expense
 
-| Category | Subcategories |
-|---|---|
-| 🍽️ **Food & Drinks** | Bar/café · Groceries · Restaurant · Fast food |
-| 🛍️ **Shopping** | Clothes & shoes · Drugstore/chemist · Electronics & accessories · Free time · Gifts & joy · Health & beauty · Home & garden · Jewels & accessories · Kids · Pets/animals · Stationery/tools |
-| 🏠 **Housing** | Energy & utilities · Maintenance & repairs · Mortgage · Property insurance · Rent · Services |
-| 🚌 **Transportation** | Business trips · Long distance · Public transport · Taxi |
-| 🚗 **Vehicle** | Fuel · Leasing · Parking · Rentals · Vehicle insurance · Vehicle maintenance |
-| 🎭 **Life & Entertainment** | Active sport & fitness · Alcohol & tobacco · Books, audio, subscriptions · Charity & gifts · Culture & sport events · Education & development · Healthcare & doctor · Hobbies · Holiday, trips, hotels · Life events · Lottery, gambling · TV, Streaming · Wellness & beauty |
-| 📱 **Communication, PC** | Internet · Phone, cell phone · Postal services · Software, apps, games |
-| 💸 **Financial expenses** | Advisory · Charges & fees · Child support · Fines · Insurances · Loan, interests · Taxes |
-| 📈 **Investments** *(expense kind)* | Collections · Financial investments · Realty · Savings · Vehicles, chattels |
-| 🛕 **Temple** *(India)* | General · Donation · Prasadam · Kalyanostsawam |
-| 🏢 **Office** *(India, work-related)* | Travel · Food · Hardware · Other |
-| 👨‍👩‍👧 **Family Support** *(India)* | Mom · Dad · Sister · Wife · Other |
+| Category                              | Subcategories                                                                                                                                                                                                                                                                |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🍽️ **Food & Drinks**                  | Bar/café · Groceries · Restaurant · Fast food                                                                                                                                                                                                                                |
+| 🛍️ **Shopping**                       | Clothes & shoes · Drugstore/chemist · Electronics & accessories · Free time · Gifts & joy · Health & beauty · Home & garden · Jewels & accessories · Kids · Pets/animals · Stationery/tools                                                                                  |
+| 🏠 **Housing**                        | Energy & utilities · Maintenance & repairs · Mortgage · Property insurance · Rent · Services                                                                                                                                                                                 |
+| 🚌 **Transportation**                 | Business trips · Long distance · Public transport · Taxi                                                                                                                                                                                                                     |
+| 🚗 **Vehicle**                        | Fuel · Leasing · Parking · Rentals · Vehicle insurance · Vehicle maintenance                                                                                                                                                                                                 |
+| 🎭 **Life & Entertainment**           | Active sport & fitness · Alcohol & tobacco · Books, audio, subscriptions · Charity & gifts · Culture & sport events · Education & development · Healthcare & doctor · Hobbies · Holiday, trips, hotels · Life events · Lottery, gambling · TV, Streaming · Wellness & beauty |
+| 📱 **Communication, PC**              | Internet · Phone, cell phone · Postal services · Software, apps, games                                                                                                                                                                                                       |
+| 💸 **Financial expenses**             | Advisory · Charges & fees · Child support · Fines · Insurances · Loan, interests · Taxes                                                                                                                                                                                     |
+| 📈 **Investments** _(expense kind)_   | Collections · Financial investments · Realty · Savings · Vehicles, chattels                                                                                                                                                                                                  |
+| 🛕 **Temple** _(India)_               | General · Donation · Prasadam · Kalyanostsawam                                                                                                                                                                                                                               |
+| 🏢 **Office** _(India, work-related)_ | Travel · Food · Hardware · Other                                                                                                                                                                                                                                             |
+| 👨‍👩‍👧 **Family Support** _(India)_       | Mom · Dad · Sister · Wife · Other                                                                                                                                                                                                                                            |
 
 ### Income
 
-| Category | Subcategories |
-|---|---|
-| 💰 **Income** | Checks, coupons · Child support · Dues & grants · Gifts · Interests, dividends · Lending, renting · Lottery, gambling · Refunds (tax, purchase) · Rental income · Sale · Wage, invoices |
-| 💸 **Cashback & Interest** *(India-flavoured)* | UPI Rewards · Bank Interest · App Cashback |
+| Category                                       | Subcategories                                                                                                                                                                           |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 💰 **Income**                                  | Checks, coupons · Child support · Dues & grants · Gifts · Interests, dividends · Lending, renting · Lottery, gambling · Refunds (tax, purchase) · Rental income · Sale · Wage, invoices |
+| 💸 **Cashback & Interest** _(India-flavoured)_ | UPI Rewards · Bank Interest · App Cashback                                                                                                                                              |
 
 ### Other
 
-| Category | Subcategories |
-|---|---|
-| ❓ **Others** | Other |
+| Category      | Subcategories |
+| ------------- | ------------- |
+| ❓ **Others** | Other         |
 
 ---
 
 ## Appendix B — Seeded payment methods
 
-| Name | Kind |
-|---|---|
-| PhonePe | upi |
-| Google Pay | upi |
-| BHIM | upi |
-| Paytm | upi |
-| Bank App | netbanking |
-| Card | card |
+| Name       | Kind       |
+| ---------- | ---------- |
+| PhonePe    | upi        |
+| Google Pay | upi        |
+| BHIM       | upi        |
+| Paytm      | upi        |
+| Bank App   | netbanking |
+| Card       | card       |
 | NetBanking | netbanking |
-| Cash | cash |
-| CRED | wallet |
-| Other | other |
+| Cash       | cash       |
+| CRED       | wallet     |
+| Other      | other      |
 
 ---
 
@@ -576,25 +578,25 @@ All categories are nested (Category → Subcategory). Icons (lucide) and colours
 
 A condensed record of the brainstorming session. Useful when re-reading later.
 
-| # | Question | Decision |
-|---|---|---|
-| Q1 | Scope vs full Wallet parity | Strip-down MVP, iterate based on use |
-| Q2 | Category structure | Nested (Wallet-style, Category → Subcategory) |
-| Q3 | Place / GPS handling | Auto-GPS capture + reusable saved places + nearby suggest |
-| Q4 | Image attachments | Multi-image, camera/gallery, auto-resize 1600 px, OPFS storage |
-| Q5 | Tech stack | React + Vite + TS + Dexie + Tailwind + shadcn/ui |
-| Audit 1 | Manage Categories in Settings | Yes |
-| Audit 2 | Nested categories | Yes (overrode my flat suggestion) |
-| Audit 3 | Party/People concept | Dropped for MVP |
-| Audit 4 | Tags vs Categories | Tags = free-form cross-cut, multi per txn, auto-create |
-| Audit 5 | Settings page contents | Profile + Manage data + Backup + About |
-| Audit 6 | Dashboard default range | Current month |
-| Extra | Payment method tracking | New `paymentMethods` table; optional per txn |
-| First-run | Seed strategy | Fresh start only; Wallet defaults + India additions; no Paisa import |
-| Office workflow | How to track reimbursements | Tag-based (`reimburse-pending` / `reimbursed`) + Dashboard chip |
-| Family Support | New category for sending money home | Yes, top-level expense category with family-member subs |
-| Naming | App name | **Purse** |
-| Hosting | Deployment target | Vercel from GitHub (`subramanyaSgb/Purse`) |
+| #               | Question                            | Decision                                                             |
+| --------------- | ----------------------------------- | -------------------------------------------------------------------- |
+| Q1              | Scope vs full Wallet parity         | Strip-down MVP, iterate based on use                                 |
+| Q2              | Category structure                  | Nested (Wallet-style, Category → Subcategory)                        |
+| Q3              | Place / GPS handling                | Auto-GPS capture + reusable saved places + nearby suggest            |
+| Q4              | Image attachments                   | Multi-image, camera/gallery, auto-resize 1600 px, OPFS storage       |
+| Q5              | Tech stack                          | React + Vite + TS + Dexie + Tailwind + shadcn/ui                     |
+| Audit 1         | Manage Categories in Settings       | Yes                                                                  |
+| Audit 2         | Nested categories                   | Yes (overrode my flat suggestion)                                    |
+| Audit 3         | Party/People concept                | Dropped for MVP                                                      |
+| Audit 4         | Tags vs Categories                  | Tags = free-form cross-cut, multi per txn, auto-create               |
+| Audit 5         | Settings page contents              | Profile + Manage data + Backup + About                               |
+| Audit 6         | Dashboard default range             | Current month                                                        |
+| Extra           | Payment method tracking             | New `paymentMethods` table; optional per txn                         |
+| First-run       | Seed strategy                       | Fresh start only; Wallet defaults + India additions; no Paisa import |
+| Office workflow | How to track reimbursements         | Tag-based (`reimburse-pending` / `reimbursed`) + Dashboard chip      |
+| Family Support  | New category for sending money home | Yes, top-level expense category with family-member subs              |
+| Naming          | App name                            | **Purse**                                                            |
+| Hosting         | Deployment target                   | Vercel from GitHub (`subramanyaSgb/Purse`)                           |
 
 ---
 

@@ -1,7 +1,7 @@
 # Purse Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task.
-> **REQUIRED:** Read `docs/plans/2026-05-11-purse-design.md` first — it is the canonical reference for *what* to build. This document covers *how*.
+> **REQUIRED:** Read `docs/plans/2026-05-11-purse-design.md` first — it is the canonical reference for _what_ to build. This document covers _how_.
 > **TDD:** Use `@superpowers:test-driven-development` for every task that touches `repo/*` or domain logic. UI components without testable behaviour can skip the test step but must still pass typecheck and lint.
 > **Verification:** Use `@superpowers:verification-before-completion` — never mark a task done without running the commands and seeing the output.
 
@@ -46,7 +46,7 @@ Twelve tasks. After this phase the repo is on GitHub, the toolchain is installed
 Run: `ls -la`
 Expected: see `docs/`, `paisa_backup_v_2026.04.302_2026_May_06_11_53.json`, nothing else.
 
-**Step 2 — Create the Vite scaffold *in-place*.**
+**Step 2 — Create the Vite scaffold _in-place_.**
 
 Vite refuses to scaffold into a non-empty directory, so use the npm 7+ trick: scaffold into a temp folder then move.
 
@@ -97,6 +97,7 @@ git commit -m "chore: scaffold Vite + React + TS"
 ### Task 0.2 — Strict TypeScript + path alias
 
 **Files:**
+
 - Modify: `tsconfig.json`
 - Modify: `tsconfig.node.json` (only if needed)
 - Modify: `vite.config.ts`
@@ -104,6 +105,7 @@ git commit -m "chore: scaffold Vite + React + TS"
 **Step 1 — Edit `tsconfig.json` to add strict + path alias.**
 
 Set `compilerOptions`:
+
 - `"strict": true` (should already be)
 - `"noUnusedLocals": true`
 - `"noUnusedParameters": true`
@@ -132,6 +134,7 @@ In `src/App.tsx`, change `import './App.css'` to `import '@/App.css'` (just to t
 **Step 4 — Add a `typecheck` npm script.**
 
 In `package.json`, add to `"scripts"`:
+
 ```json
 "typecheck": "tsc --noEmit"
 ```
@@ -151,6 +154,7 @@ git commit -m "chore: strict tsconfig + @/* path alias"
 ### Task 0.3 — ESLint + Prettier
 
 **Files:**
+
 - Create: `.eslintrc.cjs`
 - Create: `.prettierrc.json`
 - Create: `.prettierignore`
@@ -227,6 +231,7 @@ git commit -m "chore: add eslint + prettier with strict config"
 ### Task 0.4 — Tailwind CSS + base styles
 
 **Files:**
+
 - Create: `tailwind.config.ts`
 - Create: `postcss.config.js`
 - Modify: `src/index.css`
@@ -288,8 +293,14 @@ export default {
     --muted: 240 4% 16%;
     --border: 240 4% 16%;
   }
-  html, body, #root { height: 100%; }
-  body { @apply bg-background text-foreground font-sans antialiased; }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
 }
 ```
 
@@ -327,6 +338,7 @@ git commit -m "feat: install tailwind with shadcn-ready CSS variables"
 ### Task 0.5 — shadcn/ui scaffolding
 
 **Files:**
+
 - Create: `components.json`
 - Create: `src/lib/utils.ts`
 - Create: `src/components/ui/button.tsx` (smoke test only)
@@ -406,6 +418,7 @@ git commit -m "feat: configure shadcn/ui and add Button primitive"
 ### Task 0.6 — Vitest + fake-indexeddb test setup
 
 **Files:**
+
 - Create: `vitest.config.ts`
 - Create: `src/test/setup.ts`
 - Create: `src/test/smoke.test.ts`
@@ -498,6 +511,7 @@ git commit -m "test: configure vitest with fake-indexeddb"
 ### Task 0.7 — Playwright skeleton
 
 **Files:**
+
 - Create: `playwright.config.ts`
 - Create: `e2e/smoke.spec.ts`
 - Modify: `package.json` (scripts + devDeps + `.gitignore`)
@@ -582,6 +596,7 @@ git commit -m "test: add Playwright with one smoke spec"
 ### Task 0.8 — Routing + base layout placeholder
 
 **Files:**
+
 - Create: `src/routes/Root.tsx`
 - Create: `src/routes/DashboardPage.tsx`
 - Create: `src/routes/TransactionsPage.tsx`
@@ -612,16 +627,18 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 const tabs = [
-  { to: '/',             label: 'Dashboard' },
+  { to: '/', label: 'Dashboard' },
   { to: '/transactions', label: 'Transactions' },
-  { to: '/accounts',     label: 'Accounts' },
-  { to: '/settings',     label: 'Settings' },
+  { to: '/accounts', label: 'Accounts' },
+  { to: '/settings', label: 'Settings' },
 ];
 
 export default function Root() {
   return (
     <div className="flex h-full flex-col">
-      <main className="flex-1 overflow-y-auto pb-16"><Outlet /></main>
+      <main className="flex-1 overflow-y-auto pb-16">
+        <Outlet />
+      </main>
       <nav className="fixed inset-x-0 bottom-0 grid h-16 grid-cols-4 border-t bg-background">
         {tabs.map((t) => (
           <NavLink
@@ -629,7 +646,10 @@ export default function Root() {
             to={t.to}
             end={t.to === '/'}
             className={({ isActive }) =>
-              cn('flex items-center justify-center text-sm', isActive ? 'text-primary font-medium' : 'text-muted-foreground')
+              cn(
+                'flex items-center justify-center text-sm',
+                isActive ? 'text-primary font-medium' : 'text-muted-foreground',
+              )
             }
           >
             {t.label}
@@ -696,6 +716,7 @@ git commit -m "feat: add router + 4 page stubs + bottom tab bar"
 ### Task 0.9 — `vite-plugin-pwa` config
 
 **Files:**
+
 - Modify: `vite.config.ts`
 - Create: `public/icon-192.svg` and `public/icon-512.svg` (placeholder SVGs; final art in Phase 6)
 
@@ -771,6 +792,7 @@ git commit -m "feat: configure vite-plugin-pwa with placeholder icons"
 ### Task 0.10 — `vercel.json` + GitHub Actions CI
 
 **Files:**
+
 - Create: `vercel.json`
 - Create: `.github/workflows/ci.yml`
 
@@ -780,14 +802,15 @@ git commit -m "feat: configure vite-plugin-pwa with placeholder icons"
 {
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "headers": [
-    { "source": "/sw.js",                "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
-    { "source": "/index.html",           "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
-    { "source": "/manifest.webmanifest", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/index.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    },
     {
       "source": "/(.*)",
-      "headers": [
-        { "key": "Permissions-Policy", "value": "geolocation=(self), camera=(self)" }
-      ]
+      "headers": [{ "key": "Permissions-Policy", "value": "geolocation=(self), camera=(self)" }]
     }
   ]
 }
@@ -838,7 +861,7 @@ git commit -m "ci: add vercel.json and GitHub Actions workflow"
 
 **Step 1 — Write `README.md`:**
 
-```markdown
+````markdown
 # Purse
 
 A local-first personal finance PWA. Your money data lives on your device, not on a server.
@@ -849,6 +872,7 @@ A local-first personal finance PWA. Your money data lives on your device, not on
 npm install
 npm run dev
 ```
+````
 
 ## Build
 
@@ -869,14 +893,15 @@ npm run test:e2e   # playwright end-to-end
 React · Vite · TypeScript · Dexie (IndexedDB) · OPFS · Tailwind · shadcn/ui · vite-plugin-pwa · Recharts · Leaflet · Vitest · Playwright.
 
 See [docs/plans/2026-05-11-purse-design.md](docs/plans/2026-05-11-purse-design.md) for the canonical design.
-```
+
+````
 
 **Step 2 — Commit.**
 
 ```bash
 git add README.md
 git commit -m "docs: add README"
-```
+````
 
 ---
 
@@ -910,6 +935,7 @@ Sixteen tasks, all TDD. After this phase the repository facade is complete and ~
 ### Task 1.1 — Domain types
 
 **Files:**
+
 - Create: `src/domain/types.ts`
 
 **No tests** — pure type declarations.
@@ -917,8 +943,8 @@ Sixteen tasks, all TDD. After this phase the repository facade is complete and ~
 **Step 1 — Write `src/domain/types.ts`** (mirror §4.1 of the design doc):
 
 ```ts
-export type ID = string;            // UUID v4
-export type ISODate = string;       // ISO 8601 with milliseconds
+export type ID = string; // UUID v4
+export type ISODate = string; // ISO 8601 with milliseconds
 
 export type AccountType = 'cash' | 'bank' | 'card' | 'wallet' | 'savings' | 'rd' | 'asset';
 export type CategoryKind = 'expense' | 'income';
@@ -1040,6 +1066,7 @@ git commit -m "feat: define domain types for Purse"
 ### Task 1.2 — UUID + ISO timestamp helpers
 
 **Files:**
+
 - Create: `src/lib/ids.ts`
 - Create: `src/lib/ids.test.ts`
 
@@ -1057,7 +1084,8 @@ describe('ids', () => {
   });
 
   it('newId returns unique ids', () => {
-    const a = newId(), b = newId();
+    const a = newId(),
+      b = newId();
     expect(a).not.toBe(b);
   });
 
@@ -1105,6 +1133,7 @@ git commit -m "feat(lib): newId + nowIso helpers with tests"
 ### Task 1.3 — Dexie schema
 
 **Files:**
+
 - Create: `src/db/db.ts`
 - Create: `src/db/db.test.ts`
 
@@ -1130,15 +1159,31 @@ describe('db', () => {
   it('has all expected tables', () => {
     const names = db.tables.map((t) => t.name).sort();
     expect(names).toEqual(
-      ['accounts','appMeta','categories','paymentMethods','places','subcategories','tags','transactions'].sort(),
+      [
+        'accounts',
+        'appMeta',
+        'categories',
+        'paymentMethods',
+        'places',
+        'subcategories',
+        'tags',
+        'transactions',
+      ].sort(),
     );
   });
 
   it('persists and retrieves an account', async () => {
     await db.accounts.put({
-      id: 'a1', name: 'Cash', type: 'cash', currency: 'INR', openingBalance: 0,
-      colour: '#000', icon: 'wallet', archivedAt: null,
-      createdAt: '2026-05-11T00:00:00.000Z', updatedAt: '2026-05-11T00:00:00.000Z',
+      id: 'a1',
+      name: 'Cash',
+      type: 'cash',
+      currency: 'INR',
+      openingBalance: 0,
+      colour: '#000',
+      icon: 'wallet',
+      archivedAt: null,
+      createdAt: '2026-05-11T00:00:00.000Z',
+      updatedAt: '2026-05-11T00:00:00.000Z',
     });
     const a = await db.accounts.get('a1');
     expect(a?.name).toBe('Cash');
@@ -1151,30 +1196,38 @@ describe('db', () => {
 ```ts
 import Dexie, { type Table } from 'dexie';
 import type {
-  Account, Category, Subcategory, Tag, Place, PaymentMethod, Transaction, AppMeta,
+  Account,
+  Category,
+  Subcategory,
+  Tag,
+  Place,
+  PaymentMethod,
+  Transaction,
+  AppMeta,
 } from '@/domain/types';
 
 export class PurseDB extends Dexie {
-  accounts!:       Table<Account, string>;
-  categories!:     Table<Category, string>;
-  subcategories!:  Table<Subcategory, string>;
-  tags!:           Table<Tag, string>;
-  places!:         Table<Place, string>;
+  accounts!: Table<Account, string>;
+  categories!: Table<Category, string>;
+  subcategories!: Table<Subcategory, string>;
+  tags!: Table<Tag, string>;
+  places!: Table<Place, string>;
   paymentMethods!: Table<PaymentMethod, string>;
-  transactions!:   Table<Transaction, string>;
-  appMeta!:        Table<AppMeta, string>;
+  transactions!: Table<Transaction, string>;
+  appMeta!: Table<AppMeta, string>;
 
   constructor() {
     super('purse');
     this.version(1).stores({
-      accounts:       'id, name, type, archivedAt',
-      categories:     'id, name, kind, archivedAt',
-      subcategories:  'id, categoryId, name, archivedAt',
-      tags:           'id, &nameLower, lastUsedAt',
-      places:         'id, name, lastUsedAt',
+      accounts: 'id, name, type, archivedAt',
+      categories: 'id, name, kind, archivedAt',
+      subcategories: 'id, categoryId, name, archivedAt',
+      tags: 'id, &nameLower, lastUsedAt',
+      places: 'id, name, lastUsedAt',
       paymentMethods: 'id, name, kind, archivedAt',
-      transactions:   'id, occurredAt, accountId, toAccountId, categoryId, subcategoryId, placeId, paymentMethodId, *tagIds, kind, [kind+occurredAt], [accountId+occurredAt]',
-      appMeta:        'id',
+      transactions:
+        'id, occurredAt, accountId, toAccountId, categoryId, subcategoryId, placeId, paymentMethodId, *tagIds, kind, [kind+occurredAt], [accountId+occurredAt]',
+      appMeta: 'id',
     });
   }
 }
@@ -1202,6 +1255,7 @@ git commit -m "feat(db): Dexie schema for Purse (v1)"
 ### Task 1.4 — `accountsRepo` with tests
 
 **Files:**
+
 - Create: `src/repo/accounts.ts`
 - Create: `src/repo/accounts.test.ts`
 
@@ -1220,30 +1274,72 @@ beforeEach(async () => {
 
 describe('accountsRepo', () => {
   it('create() inserts with generated id and timestamps', async () => {
-    const a = await accountsRepo.create({ name: 'Cash', type: 'cash', currency: 'INR', openingBalance: 0, colour: '#0f172a', icon: 'wallet' });
+    const a = await accountsRepo.create({
+      name: 'Cash',
+      type: 'cash',
+      currency: 'INR',
+      openingBalance: 0,
+      colour: '#0f172a',
+      icon: 'wallet',
+    });
     expect(a.id).toHaveLength(36);
     expect(a.createdAt).toEqual(a.updatedAt);
     expect(a.archivedAt).toBeNull();
   });
 
   it('list() returns non-archived accounts by default', async () => {
-    await accountsRepo.create({ name: 'A', type: 'bank', currency: 'INR', openingBalance: 0, colour: '#000', icon: 'b' });
-    const b = await accountsRepo.create({ name: 'B', type: 'bank', currency: 'INR', openingBalance: 0, colour: '#000', icon: 'b' });
+    await accountsRepo.create({
+      name: 'A',
+      type: 'bank',
+      currency: 'INR',
+      openingBalance: 0,
+      colour: '#000',
+      icon: 'b',
+    });
+    const b = await accountsRepo.create({
+      name: 'B',
+      type: 'bank',
+      currency: 'INR',
+      openingBalance: 0,
+      colour: '#000',
+      icon: 'b',
+    });
     await accountsRepo.archive(b.id);
     const list = await accountsRepo.list();
     expect(list.map((x) => x.name)).toEqual(['A']);
   });
 
   it('list({ includeArchived: true }) returns all', async () => {
-    await accountsRepo.create({ name: 'A', type: 'bank', currency: 'INR', openingBalance: 0, colour: '#000', icon: 'b' });
-    const b = await accountsRepo.create({ name: 'B', type: 'bank', currency: 'INR', openingBalance: 0, colour: '#000', icon: 'b' });
+    await accountsRepo.create({
+      name: 'A',
+      type: 'bank',
+      currency: 'INR',
+      openingBalance: 0,
+      colour: '#000',
+      icon: 'b',
+    });
+    const b = await accountsRepo.create({
+      name: 'B',
+      type: 'bank',
+      currency: 'INR',
+      openingBalance: 0,
+      colour: '#000',
+      icon: 'b',
+    });
     await accountsRepo.archive(b.id);
     const list = await accountsRepo.list({ includeArchived: true });
     expect(list).toHaveLength(2);
   });
 
   it('update() bumps updatedAt, preserves id', async () => {
-    const a = await accountsRepo.create({ name: 'A', type: 'bank', currency: 'INR', openingBalance: 0, colour: '#000', icon: 'b' });
+    const a = await accountsRepo.create({
+      name: 'A',
+      type: 'bank',
+      currency: 'INR',
+      openingBalance: 0,
+      colour: '#000',
+      icon: 'b',
+    });
     await new Promise((r) => setTimeout(r, 5));
     const u = await accountsRepo.update(a.id, { name: 'A2' });
     expect(u.id).toBe(a.id);
@@ -1252,7 +1348,14 @@ describe('accountsRepo', () => {
   });
 
   it('remove() hard-deletes if no transactions reference it', async () => {
-    const a = await accountsRepo.create({ name: 'A', type: 'bank', currency: 'INR', openingBalance: 0, colour: '#000', icon: 'b' });
+    const a = await accountsRepo.create({
+      name: 'A',
+      type: 'bank',
+      currency: 'INR',
+      openingBalance: 0,
+      colour: '#000',
+      icon: 'b',
+    });
     await accountsRepo.remove(a.id);
     expect(await accountsRepo.get(a.id)).toBeNull();
   });
@@ -1287,7 +1390,13 @@ export const accountsRepo = {
   },
   async create(input: CreateAccountInput): Promise<Account> {
     const now = nowIso();
-    const acc: Account = { ...input, id: newId(), archivedAt: null, createdAt: now, updatedAt: now };
+    const acc: Account = {
+      ...input,
+      id: newId(),
+      archivedAt: null,
+      createdAt: now,
+      updatedAt: now,
+    };
     await db.accounts.add(acc);
     return acc;
   },
@@ -1306,8 +1415,10 @@ export const accountsRepo = {
   },
   async remove(id: string): Promise<void> {
     const refs = await db.transactions
-      .where('accountId').equals(id)
-      .or('toAccountId').equals(id)
+      .where('accountId')
+      .equals(id)
+      .or('toAccountId')
+      .equals(id)
       .count();
     if (refs > 0) throw new Error('Account has transactions; archive instead');
     await db.accounts.delete(id);
@@ -1407,6 +1518,7 @@ Same shape as `accountsRepo`. No special logic.
 ### Task 1.10 — `transactionsRepo` basic CRUD
 
 **Files:**
+
 - Create: `src/repo/transactions.ts`
 - Create: `src/repo/transactions.test.ts`
 
@@ -1416,8 +1528,15 @@ Same shape as `accountsRepo`. No special logic.
 describe('transactionsRepo', () => {
   it('create() inserts an expense with required fields', async () => {
     const tx = await transactionsRepo.create({
-      kind: 'expense', amount: 100, currency: 'INR', occurredAt: '2026-05-11T10:00:00.000Z',
-      accountId: 'acc1', categoryId: 'cat1', note: 'Lunch', tagIds: [], images: [],
+      kind: 'expense',
+      amount: 100,
+      currency: 'INR',
+      occurredAt: '2026-05-11T10:00:00.000Z',
+      accountId: 'acc1',
+      categoryId: 'cat1',
+      note: 'Lunch',
+      tagIds: [],
+      images: [],
     });
     expect(tx.id).toHaveLength(36);
     expect(tx.kind).toBe('expense');
@@ -1425,22 +1544,41 @@ describe('transactionsRepo', () => {
 
   it('create() rejects expense with amount <= 0', async () => {
     await expect(
-      transactionsRepo.create({ kind: 'expense', amount: 0, currency: 'INR', occurredAt: '...', accountId: 'a', note: '', tagIds: [], images: [] })
+      transactionsRepo.create({
+        kind: 'expense',
+        amount: 0,
+        currency: 'INR',
+        occurredAt: '...',
+        accountId: 'a',
+        note: '',
+        tagIds: [],
+        images: [],
+      }),
     ).rejects.toThrow(/amount/);
   });
 
   it('create() requires toAccountId for transfer kind', async () => {
     await expect(
-      transactionsRepo.create({ kind: 'transfer', amount: 1, currency: 'INR', occurredAt: '...', accountId: 'a', note: '', tagIds: [], images: [] })
+      transactionsRepo.create({
+        kind: 'transfer',
+        amount: 1,
+        currency: 'INR',
+        occurredAt: '...',
+        accountId: 'a',
+        note: '',
+        tagIds: [],
+        images: [],
+      }),
     ).rejects.toThrow(/toAccountId/);
   });
 
-  it('update() bumps updatedAt', /* ... */);
-  it('remove() deletes the row', /* ... */);
+  it('update() bumps updatedAt' /* ... */);
+  it('remove() deletes the row' /* ... */);
 });
 ```
 
 **Implementation guards:**
+
 - `kind === 'transfer'` requires `toAccountId` and `accountId !== toAccountId`.
 - `kind` in `['expense','income']` requires `categoryId`.
 - `amount > 0` always (sign is derived from `kind` at read time).
@@ -1464,7 +1602,7 @@ export type TxFilters = {
   tagId?: string;
   paymentMethodId?: string;
   kind?: TxKind;
-  search?: string;  // matched against note + place name + category name (case-insensitive)
+  search?: string; // matched against note + place name + category name (case-insensitive)
 };
 ```
 
@@ -1489,6 +1627,7 @@ monthlyTotalsByCategory(monthISO: string /* 'YYYY-MM' */): Promise<Array<{
 ```
 
 **Tests:**
+
 - Excludes `kind: 'transfer'`.
 - Sums by `categoryId` (subcategory not used here).
 - Returns empty array for a month with no transactions.
@@ -1501,6 +1640,7 @@ monthlyTotalsByCategory(monthISO: string /* 'YYYY-MM' */): Promise<Array<{
 ### Task 1.13 — Balances computation
 
 **Files:**
+
 - Create: `src/repo/balances.ts`
 - Create: `src/repo/balances.test.ts`
 
@@ -1529,11 +1669,13 @@ Singleton row with `id: 'singleton'`. Methods: `get()`, `update(patch)`. If row 
 ### Task 1.15 — First-launch seed
 
 **Files:**
+
 - Create: `src/seed/defaults.ts` (the seed data lists)
 - Create: `src/seed/seed.ts` (the seed function)
 - Create: `src/seed/seed.test.ts`
 
 **Step 1 — Defaults.** `src/seed/defaults.ts` exports:
+
 - `DEFAULT_ACCOUNT` — one Cash account.
 - `DEFAULT_CATEGORIES` — Wallet defaults + India additions, exactly as listed in Appendix A of the design doc.
 - `DEFAULT_SUBCATEGORIES` — keyed by category slug, with the leaves from the appendix.
@@ -1541,6 +1683,7 @@ Singleton row with `id: 'singleton'`. Methods: `get()`, `update(patch)`. If row 
 - `DEFAULT_TAGS` — `['reimburse-pending', 'reimbursed']`.
 
 **Step 2 — Tests** for `seedIfEmpty()`:
+
 - Inserts everything on a fresh DB.
 - Is a no-op if `appMeta` already exists.
 - After seeding, `categoriesRepo.list({ kind: 'expense' })` returns the expected count.
@@ -1555,6 +1698,7 @@ Singleton row with `id: 'singleton'`. Methods: `get()`, `update(patch)`. If row 
 ### Task 1.16 — OPFS image service
 
 **Files:**
+
 - Create: `src/services/images.ts`
 - Create: `src/services/images.test.ts`
 
@@ -2096,6 +2240,7 @@ Confirm in Vercel dashboard: the build completes; the production URL shows the a
 Run a Lighthouse audit on the production URL.
 
 Targets:
+
 - Performance ≥ 90
 - Accessibility ≥ 95
 - Best Practices ≥ 95
