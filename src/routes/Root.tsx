@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useFirstRun } from '@/state/useFirstRun';
 import { AddTransactionSheet } from '@/components/forms/AddTransactionSheet';
 import { SplashScreen } from '@/components/SplashScreen';
+import { TransactionDetailSheet } from '@/components/TransactionDetailSheet';
 
 type Tab = { to: string; label: string; Icon: LucideIcon };
 
@@ -91,6 +92,10 @@ export default function Root() {
       {/* Global Add/Edit transaction sheet mounted once for the whole app —
           opened from any page's FAB via useUiStore.openAddTx(). */}
       <AddTransactionSheet />
+
+      {/* Global Detail sheet — opened when a TransactionRow fires
+          useUiStore.setDetailTxId(id). */}
+      <TransactionDetailSheet />
     </div>
   );
 }

@@ -21,6 +21,8 @@ import { AmountHero } from './AmountHero';
 import { TxKindToggle } from './TxKindToggle';
 import { TxFieldRow } from './TxFieldRow';
 import { TagAutocomplete } from './TagAutocomplete';
+import { PlacePicker } from './PlacePicker';
+import { ImageAttachment } from './ImageAttachment';
 import { iconByName } from './iconOptions';
 import { KIND_TINT, KIND_INK, KIND_LABEL } from './kindTint';
 import { accountsRepo } from '@/repo/accounts';
@@ -32,7 +34,6 @@ import { tagsRepo } from '@/repo/tags';
 import { transactionsRepo } from '@/repo/transactions';
 import { BALANCES_QUERY_KEY } from '@/state/useBalances';
 import { useUiStore } from '@/state/uiStore';
-import { fmtINR } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { Category, Transaction, TxKind } from '@/domain/types';
 
@@ -48,9 +49,11 @@ type Draft = {
   toAccountId: string;
   categoryId: string;
   subcategoryId: string;
+  placeId: string;
   paymentMethodId: string;
   note: string;
   tagIds: string[];
+  images: string[];
 };
 
 function isoLocalToUtc(localValue: string): string {
@@ -76,9 +79,11 @@ function emptyDraft(defaultKind: TxKind, defaultAccountId: string | undefined): 
     toAccountId: '',
     categoryId: '',
     subcategoryId: '',
+    placeId: '',
     paymentMethodId: '',
     note: '',
     tagIds: [],
+    images: [],
   };
 }
 
@@ -91,9 +96,11 @@ function draftFromTx(tx: Transaction): Draft {
     toAccountId: tx.toAccountId ?? '',
     categoryId: tx.categoryId ?? '',
     subcategoryId: tx.subcategoryId ?? '',
+    placeId: tx.placeId ?? '',
     paymentMethodId: tx.paymentMethodId ?? '',
     note: tx.note,
     tagIds: [...tx.tagIds],
+    images: [...tx.images],
   };
 }
 
@@ -204,10 +211,11 @@ function AddTransactionSheetBody({
         toAccountId: draft.kind === 'transfer' ? draft.toAccountId : undefined,
         categoryId: draft.kind === 'transfer' ? undefined : visibleCategoryId || undefined,
         subcategoryId: visibleSubcategoryId || undefined,
+        placeId: draft.kind === 'transfer' ? undefined : draft.placeId || undefined,
         paymentMethodId: draft.paymentMethodId || undefined,
         note: draft.note,
         tagIds: draft.tagIds,
-        images: initial?.images ?? [],
+        images: draft.images,
       }),
   });
   const update = useMutation({
@@ -220,9 +228,11 @@ function AddTransactionSheetBody({
         toAccountId: draft.kind === 'transfer' ? draft.toAccountId : undefined,
         categoryId: draft.kind === 'transfer' ? undefined : visibleCategoryId || undefined,
         subcategoryId: visibleSubcategoryId || undefined,
+        placeId: draft.kind === 'transfer' ? undefined : draft.placeId || undefined,
         paymentMethodId: draft.paymentMethodId || undefined,
         note: draft.note,
         tagIds: draft.tagIds,
+        images: draft.images,
       }),
   });
   const remove = useMutation({
@@ -431,6 +441,16 @@ function AddTransactionSheetBody({
             </TxFieldRow>
           ) : null}
 
+          {/* Place — expense/income only. Transfer is a balance shuffle, place doesn't apply. */}
+          {draft.kind !== 'transfer' ? (
+            <TxFieldRow label="Place" hint="GPS-aware">
+              <PlacePicker
+                value={draft.placeId || null}
+                onChange={(next) => setDraft((d) => ({ ...d, placeId: next ?? '' }))}
+              />
+            </TxFieldRow>
+          ) : null}
+
           {/* Tags */}
           <TxFieldRow label="Tags">
             <TagAutocomplete
@@ -448,11 +468,16 @@ function AddTransactionSheetBody({
             />
           </TxFieldRow>
 
-          {/* Balance hint */}
-          {draft.accountId ? (
-            <p className="text-muted-foreground px-1 text-[11px]">
-              Current account balance · {fmtINR(0)} (preview-only in this build)
-            </p>
+          {/* Receipt images — expense/income only. The scratch folder is the
+              draft tx id (edit) or a stable 'draft-<accountId>' string (new). */}
+          {draft.kind !== 'transfer' ? (
+            <TxFieldRow label="Receipt">
+              <ImageAttachment
+                value={draft.images}
+                scratchId={initial?.id ?? `draft-${draft.accountId || 'new'}`}
+                onChange={(next) => setDraft((d) => ({ ...d, images: next }))}
+              />
+            </TxFieldRow>
           ) : null}
 
           {error ? (

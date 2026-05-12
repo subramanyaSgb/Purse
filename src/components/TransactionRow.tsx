@@ -1,6 +1,7 @@
 import { createElement } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowDownLeft, ArrowLeftRight } from 'lucide-react';
+import { useUiStore } from '@/state/uiStore';
 import { accountsRepo } from '@/repo/accounts';
 import { categoriesRepo } from '@/repo/categories';
 import { subcategoriesRepo } from '@/repo/subcategories';
@@ -27,9 +28,13 @@ export function TransactionRow({
   compact = false,
 }: {
   tx: Transaction;
+  /** Override: defaults to opening the global detail sheet via useUiStore. */
   onClick?: (tx: Transaction) => void;
   compact?: boolean;
 }) {
+  const setDetailTxId = useUiStore((s) => s.setDetailTxId);
+  const handleClick = onClick ?? ((t: Transaction) => setDetailTxId(t.id));
+
   const { data: accounts = [] } = useQuery({
     queryKey: ['accounts'],
     queryFn: () => accountsRepo.list({ includeArchived: true }),
@@ -86,7 +91,7 @@ export function TransactionRow({
   return (
     <button
       type="button"
-      onClick={() => onClick?.(tx)}
+      onClick={() => handleClick(tx)}
       className={cn(
         'border-border flex w-full items-center gap-3 border-b text-left transition-colors last:border-b-0 hover:bg-white/[0.02]',
         compact ? 'px-3 py-3' : 'px-4 py-3.5',

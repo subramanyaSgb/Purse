@@ -29,6 +29,10 @@ type UiState = {
   /** The id of the transaction currently being edited (null if none). */
   editingTxId: string | null;
   setEditingTxId: (id: string | null) => void;
+
+  /** The id of the transaction currently shown in the detail sheet (null if none). */
+  detailTxId: string | null;
+  setDetailTxId: (id: string | null) => void;
 };
 
 export const useUiStore = create<UiState>((set) => ({
@@ -47,4 +51,7 @@ export const useUiStore = create<UiState>((set) => ({
 
   editingTxId: null,
   setEditingTxId: (editingTxId) => set({ editingTxId }),
+
+  detailTxId: null,
+  setDetailTxId: (detailTxId) => set({ detailTxId }),
 }));
