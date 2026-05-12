@@ -431,3 +431,111 @@ describe('transactionsRepo.listByRange', () => {
     expect(rows.map((r) => r.note)).toEqual(['May the first']);
   });
 });
+
+describe('transactionsRepo.monthlyTotalsByCategory', () => {
+  it('returns [] for a month with no transactions', async () => {
+    const rows = await transactionsRepo.monthlyTotalsByCategory('2026-05');
+    expect(rows).toEqual([]);
+  });
+
+  it('sums by categoryId, excluding transfers', async () => {
+    // All times deliberately mid-month so timezone treatment is uniform.
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 100,
+      currency: 'INR',
+      occurredAt: '2026-05-10T12:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'cFood',
+      note: '',
+      tagIds: [],
+      images: [],
+    });
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 250,
+      currency: 'INR',
+      occurredAt: '2026-05-20T12:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'cFood',
+      note: '',
+      tagIds: [],
+      images: [],
+    });
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 80,
+      currency: 'INR',
+      occurredAt: '2026-05-21T12:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'cTravel',
+      note: '',
+      tagIds: [],
+      images: [],
+    });
+    await transactionsRepo.create({
+      kind: 'income',
+      amount: 50000,
+      currency: 'INR',
+      occurredAt: '2026-05-15T12:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'cSalary',
+      note: '',
+      tagIds: [],
+      images: [],
+    });
+    // transfer must be excluded
+    await transactionsRepo.create({
+      kind: 'transfer',
+      amount: 9999,
+      currency: 'INR',
+      occurredAt: '2026-05-16T12:00:00.000Z',
+      accountId: 'a1',
+      toAccountId: 'a2',
+      note: '',
+      tagIds: [],
+      images: [],
+    });
+
+    const rows = await transactionsRepo.monthlyTotalsByCategory('2026-05');
+    const byCat = Object.fromEntries(rows.map((r) => [r.categoryId, r]));
+    expect(byCat['cFood']).toEqual({ categoryId: 'cFood', total: 350, count: 2 });
+    expect(byCat['cTravel']).toEqual({ categoryId: 'cTravel', total: 80, count: 1 });
+    expect(byCat['cSalary']).toEqual({ categoryId: 'cSalary', total: 50_000, count: 1 });
+    expect(rows.find((r) => r.total === 9999)).toBeUndefined();
+  });
+
+  it('honours the IST month boundary (Asia/Kolkata)', async () => {
+    // 2026-05-01 00:00 IST = 2026-04-30 18:30 UTC
+    // 2026-06-01 00:00 IST = 2026-05-31 18:30 UTC
+    //
+    // A tx at 2026-04-30T19:00:00Z is 00:30 IST on May 1 \xe2\x80\x94 should belong
+    // to the May bucket. A tx at 2026-05-31T19:00:00Z is 00:30 IST on
+    // June 1 \xe2\x80\x94 should NOT.
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 11,
+      currency: 'INR',
+      occurredAt: '2026-04-30T19:00:00.000Z', // 00:30 IST on 1 May
+      accountId: 'a1',
+      categoryId: 'cFood',
+      note: 'early-may IST',
+      tagIds: [],
+      images: [],
+    });
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 22,
+      currency: 'INR',
+      occurredAt: '2026-05-31T19:00:00.000Z', // 00:30 IST on 1 June
+      accountId: 'a1',
+      categoryId: 'cFood',
+      note: 'early-june IST',
+      tagIds: [],
+      images: [],
+    });
+
+    const rows = await transactionsRepo.monthlyTotalsByCategory('2026-05');
+    expect(rows).toEqual([{ categoryId: 'cFood', total: 11, count: 1 }]);
+  });
+});

@@ -90,6 +90,42 @@ export const transactionsRepo = {
   async remove(id: string): Promise<void> {
     await db.transactions.delete(id);
   },
+  async monthlyTotalsByCategory(
+    monthISO: string /* 'YYYY-MM' */,
+  ): Promise<Array<{ categoryId: string; total: number; count: number }>> {
+    // Month boundary is 00:00 IST on the first day of the month, exclusive end
+    // is 00:00 IST on the first day of the next month. IST is UTC+5:30, so we
+    // shift the boundaries by -5:30h to get UTC instants.
+    const [yStr, mStr] = monthISO.split('-');
+    const y = Number(yStr);
+    const m = Number(mStr); // 1-12
+    if (!Number.isInteger(y) || !Number.isInteger(m) || m < 1 || m > 12) {
+      throw new Error(`Invalid monthISO: ${monthISO}`);
+    }
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const startUtc = new Date(Date.UTC(y, m - 1, 1) - IST_OFFSET_MS).toISOString();
+    const endUtc = new Date(Date.UTC(y, m, 1) - IST_OFFSET_MS).toISOString();
+
+    const rows = await db.transactions
+      .where('occurredAt')
+      .between(startUtc, endUtc, true, false)
+      .toArray();
+
+    const totals = new Map<string, { categoryId: string; total: number; count: number }>();
+    for (const r of rows) {
+      if (r.kind === 'transfer') continue;
+      if (!r.categoryId) continue;
+      const cur = totals.get(r.categoryId) ?? {
+        categoryId: r.categoryId,
+        total: 0,
+        count: 0,
+      };
+      cur.total += r.amount;
+      cur.count += 1;
+      totals.set(r.categoryId, cur);
+    }
+    return Array.from(totals.values()).sort((a, b) => b.total - a.total);
+  },
   async listByRange(start: string, end: string, filters: TxFilters = {}): Promise<Transaction[]> {
     const baseRows = await rangeRows(start, end, filters.kind);
 
