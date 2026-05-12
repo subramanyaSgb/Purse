@@ -30,3 +30,7 @@ playwright-report/
 test-results/
 .env*
 !.env.example
+
+# Tooling (agent harness scratch)
+.claude/
+.code-review-graph/

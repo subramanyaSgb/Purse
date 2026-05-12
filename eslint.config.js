@@ -27,4 +27,12 @@ export default defineConfig([
       ],
     },
   },
+  {
+    // shadcn/ui primitives intentionally co-export non-component helpers
+    // (e.g. `buttonVariants`) — the Fast Refresh rule doesn't apply here.
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ]);
