@@ -117,4 +117,17 @@
   .tabular {
     font-variant-numeric: tabular-nums;
   }
+
+  /* Hide the scrollbar but keep the scroll behaviour intact. Applied to
+     every horizontal-scroll affordance in the app (chip rows, accounts
+     strip, image strips). */
+  .scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hidden::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
 }

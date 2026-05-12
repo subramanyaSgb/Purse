@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Sheet,
   SheetContent,
@@ -22,6 +21,38 @@ import { ColourPicker } from './ColourPicker';
 import { COLOUR_OPTIONS } from './colourOptions';
 import { IconPicker } from './IconPicker';
 import type { Account, AccountType } from '@/domain/types';
+
+/** Eyebrow-label + content row used inside the AccountForm. Matches the
+ *  TxFieldRow pattern from the AddTransactionSheet so every form has the
+ *  same vertical rhythm. */
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-baseline gap-2">
+        <span
+          className="text-[11px] font-semibold tracking-wider uppercase"
+          style={{ color: 'var(--color-ink-faint)' }}
+        >
+          {label}
+        </span>
+        {hint ? (
+          <span className="text-[11px]" style={{ color: 'var(--color-ink-faint)' }}>
+            · {hint}
+          </span>
+        ) : null}
+      </div>
+      {children}
+    </div>
+  );
+}
 
 const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
   { value: 'cash', label: 'Cash' },
@@ -123,10 +154,34 @@ function AccountFormBody({
     }
   }
 
+  const previewInitial = (values.name[0] ?? '?').toUpperCase();
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-4 pb-4">
-      <div className="grid gap-2">
-        <Label htmlFor="acc-name">Name</Label>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-4 pb-6">
+      {/* Preview tile — mirrors how the account renders on /accounts */}
+      <div className="flex items-center gap-3 pt-2">
+        <span
+          aria-hidden
+          className="font-display grid size-14 place-items-center rounded-2xl text-xl font-bold"
+          style={{
+            background: `linear-gradient(135deg, ${values.colour} 0%, color-mix(in srgb, ${values.colour} 60%, #000) 100%)`,
+            color: '#0A0908',
+          }}
+        >
+          {previewInitial}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-foreground truncate text-base font-semibold">
+            {values.name.trim() || 'New account'}
+          </div>
+          <div className="text-muted-foreground mt-0.5 text-xs capitalize">
+            {values.type}
+            {values.bankName?.trim() ? ` · ${values.bankName.trim()}` : ''}
+          </div>
+        </div>
+      </div>
+
+      <Field label="Name">
         <Input
           id="acc-name"
           value={values.name}
@@ -135,10 +190,9 @@ function AccountFormBody({
           autoFocus
           required
         />
-      </div>
+      </Field>
 
-      <div className="grid gap-2">
-        <Label htmlFor="acc-type">Type</Label>
+      <Field label="Type">
         <Select
           value={values.type}
           onValueChange={(v) => setValues((s) => ({ ...s, type: v as AccountType }))}
@@ -154,23 +208,21 @@ function AccountFormBody({
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </Field>
 
       {TYPES_WITH_BANK_NAME.has(values.type) ? (
-        <div className="grid gap-2">
-          <Label htmlFor="acc-bank">Bank name (optional)</Label>
+        <Field label="Bank name" hint="optional">
           <Input
             id="acc-bank"
             value={values.bankName ?? ''}
             onChange={(e) => setValues((v) => ({ ...v, bankName: e.target.value }))}
             placeholder="e.g. HDFC, ICICI"
           />
-        </div>
+        </Field>
       ) : null}
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="grid gap-2">
-          <Label htmlFor="acc-currency">Currency</Label>
+        <Field label="Currency">
           <Input
             id="acc-currency"
             value={values.currency}
@@ -182,9 +234,8 @@ function AccountFormBody({
             }
             maxLength={3}
           />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="acc-opening">Opening balance</Label>
+        </Field>
+        <Field label="Opening balance">
           <Input
             id="acc-opening"
             type="number"
@@ -196,22 +247,25 @@ function AccountFormBody({
                 openingBalance: e.target.value === '' ? 0 : Number(e.target.value),
               }))
             }
+            className="font-mono tabular"
+          />
+        </Field>
+      </div>
+
+      <Field label="Colour">
+        <div className="bg-card border-border rounded-xl border p-3">
+          <ColourPicker
+            value={values.colour}
+            onChange={(c) => setValues((v) => ({ ...v, colour: c }))}
           />
         </div>
-      </div>
+      </Field>
 
-      <div className="grid gap-2">
-        <Label>Colour</Label>
-        <ColourPicker
-          value={values.colour}
-          onChange={(c) => setValues((v) => ({ ...v, colour: c }))}
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label>Icon</Label>
-        <IconPicker value={values.icon} onChange={(i) => setValues((v) => ({ ...v, icon: i }))} />
-      </div>
+      <Field label="Icon">
+        <div className="bg-card border-border rounded-xl border p-3">
+          <IconPicker value={values.icon} onChange={(i) => setValues((v) => ({ ...v, icon: i }))} />
+        </div>
+      </Field>
 
       {error ? (
         <p role="alert" className="text-destructive text-sm">
@@ -229,13 +283,19 @@ function AccountFormBody({
               onClose();
             }}
             disabled={saving}
+            className="gap-2"
+            style={{
+              background: 'rgba(255,136,102,0.10)',
+              borderColor: 'rgba(255,136,102,0.3)',
+              color: 'var(--color-expense)',
+            }}
           >
-            <Trash2 className="mr-2 size-4" />
+            <Trash2 className="size-4" />
             Archive
           </Button>
         ) : null}
         <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : isEdit ? 'Save' : 'Create'}
+          {saving ? 'Saving…' : isEdit ? 'Save' : 'Create account'}
         </Button>
       </SheetFooter>
     </form>

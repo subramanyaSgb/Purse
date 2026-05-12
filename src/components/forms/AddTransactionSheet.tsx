@@ -34,7 +34,6 @@ import { tagsRepo } from '@/repo/tags';
 import { transactionsRepo } from '@/repo/transactions';
 import { BALANCES_QUERY_KEY } from '@/state/useBalances';
 import { useUiStore } from '@/state/uiStore';
-import { cn } from '@/lib/utils';
 import type { Category, Transaction, TxKind } from '@/domain/types';
 
 const OFFICE_CATEGORY_NAME = 'Office';
@@ -524,7 +523,12 @@ function AddTransactionSheetBody({
   );
 }
 
-/** Category picker that shows the icon and tint per option. */
+/**
+ * Category picker rendered as a shadcn Select. The trigger displays the
+ * picked category as a chip (colour-tinted icon tile + name); each menu
+ * item carries the same icon for quick scanning. Matches the design's
+ * 'Category · Food & Drinks · Restaurant' chip on the AddTransactionSheet.
+ */
 function CategoryPicker({
   categories,
   value,
@@ -541,39 +545,48 @@ function CategoryPicker({
       </p>
     );
   }
+  const selected = categories.find((c) => c.id === value);
   return (
-    <div className="scrollbar-hidden flex gap-2 overflow-x-auto py-1">
-      {categories.map((c) => {
-        const on = c.id === value;
-        return (
-          <button
-            key={c.id}
-            type="button"
-            onClick={() => onChange(c.id)}
-            className={cn(
-              'flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition-colors',
-              on ? 'border-foreground' : 'border-border bg-card',
-            )}
-            style={
-              on ? { background: `color-mix(in srgb, ${c.colour} 22%, transparent)` } : undefined
-            }
-            aria-pressed={on}
-          >
+    <Select value={value || undefined} onValueChange={onChange}>
+      <SelectTrigger className="h-auto py-2.5">
+        {selected ? (
+          <span className="flex min-w-0 items-center gap-2.5">
             <span
               aria-hidden
-              className="grid size-5 place-items-center rounded-full"
-              style={{ background: c.colour, color: '#0A0908' }}
+              className="grid size-7 shrink-0 place-items-center rounded-lg"
+              style={{ background: selected.colour, color: '#0A0908' }}
             >
-              {createElement(iconByName(c.icon), {
-                className: 'size-[12px]',
+              {createElement(iconByName(selected.icon), {
+                className: 'size-[14px]',
                 strokeWidth: 1.8,
               })}
             </span>
-            {c.name}
-          </button>
-        );
-      })}
-    </div>
+            <span className="truncate text-sm font-semibold">{selected.name}</span>
+          </span>
+        ) : (
+          <SelectValue placeholder="Pick a category" />
+        )}
+      </SelectTrigger>
+      <SelectContent>
+        {categories.map((c) => (
+          <SelectItem key={c.id} value={c.id}>
+            <span className="flex items-center gap-2.5">
+              <span
+                aria-hidden
+                className="grid size-5 shrink-0 place-items-center rounded-md"
+                style={{ background: c.colour, color: '#0A0908' }}
+              >
+                {createElement(iconByName(c.icon), {
+                  className: 'size-[12px]',
+                  strokeWidth: 1.8,
+                })}
+              </span>
+              {c.name}
+            </span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 

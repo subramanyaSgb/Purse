@@ -11,7 +11,8 @@ test('row tap → detail → edit + delete round-trip', async ({ page }) => {
   // Seed an expense via the FAB.
   await page.getByRole('button', { name: 'Add transaction' }).click();
   await page.getByLabel('Exact amount').fill('150');
-  await page.getByRole('button', { name: /^Food & Drinks$/ }).click();
+  await page.getByText('Pick a category').click();
+  await page.getByRole('option', { name: /^Food & Drinks$/ }).click();
   await page.getByRole('button', { name: /^Save expense$/ }).click();
 
   // Navigate to Activity and confirm the row.

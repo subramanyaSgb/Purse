@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
  * Adds an expense via the FAB → AddTransactionSheet flow:
  * 1. Open dashboard, tap the FAB.
  * 2. The kind toggle defaults to Expense; type an exact amount.
- * 3. Pick the seeded 'Food & Drinks' category from the horizontal picker.
+ * 3. Open the Category dropdown and pick the seeded 'Food & Drinks'.
  * 4. Save. Activity should show the row at the top.
  */
 test('FAB opens the new-transaction sheet and saves an expense', async ({ page }) => {
@@ -18,9 +18,10 @@ test('FAB opens the new-transaction sheet and saves an expense', async ({ page }
   // Type an exact amount.
   await page.getByLabel('Exact amount').fill('421');
 
-  // Pick a category. The seeded Cash account is already selected via
-  // appMeta.defaultAccountId, so the category is the only required pick.
-  await page.getByRole('button', { name: /^Food & Drinks$/ }).click();
+  // Open the Category dropdown (placeholder text "Pick a category") and
+  // choose Food & Drinks from the menu.
+  await page.getByText('Pick a category').click();
+  await page.getByRole('option', { name: /^Food & Drinks$/ }).click();
 
   // Save.
   await page.getByRole('button', { name: /^Save expense$/ }).click();
