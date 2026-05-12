@@ -69,7 +69,12 @@ export default function ManageCategoriesPage() {
       <ManageListShell<Category>
         title="Manage categories"
         toolbar={
-          <div role="tablist" aria-label="Kind" className="bg-muted flex gap-1 rounded-md p-1">
+          <div
+            role="tablist"
+            aria-label="Kind"
+            className="border-border flex gap-1 rounded-full border p-1"
+            style={{ background: 'var(--color-elevation-subtle)' }}
+          >
             {(['expense', 'income'] as const).map((k) => (
               <Button
                 key={k}
@@ -79,7 +84,10 @@ export default function ManageCategoriesPage() {
                 size="sm"
                 variant={kind === k ? 'default' : 'ghost'}
                 onClick={() => setKind(k)}
-                className={cn('flex-1', kind === k ? '' : 'hover:bg-background')}
+                className={cn(
+                  'flex-1 cursor-pointer rounded-full',
+                  kind === k ? '' : 'hover:bg-background',
+                )}
               >
                 {k === 'expense' ? 'Expense' : 'Income'}
               </Button>
@@ -103,27 +111,41 @@ export default function ManageCategoriesPage() {
             <div className="flex items-center">
               <Link
                 to={`/settings/categories/${c.id}`}
-                className="hover:bg-accent focus-visible:ring-ring flex flex-1 items-center gap-3 px-4 py-3 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                className="hover:bg-accent focus-visible:ring-ring flex flex-1 cursor-pointer items-center gap-3 px-4 py-3.5 transition-colors focus-visible:ring-2 focus-visible:outline-none"
                 aria-label={`Subcategories of ${c.name}`}
               >
                 <span
                   aria-hidden
-                  className="grid size-9 place-items-center rounded-full"
+                  className="grid size-10 place-items-center rounded-2xl"
                   style={{ backgroundColor: c.colour, color: '#fff' }}
                 >
-                  <Icon className="size-4" />
+                  <Icon className="size-4.5" strokeWidth={1.8} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 truncate">
-                    <span className="truncate font-medium">{c.name}</span>
+                    <span className="text-foreground truncate text-[15px] font-semibold">
+                      {c.name}
+                    </span>
                     {archived ? (
-                      <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px] uppercase">
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase"
+                        style={{
+                          background: 'var(--color-elevation-subtle)',
+                          color: 'var(--color-ink-faint)',
+                        }}
+                      >
                         Archived
                       </span>
                     ) : null}
                   </div>
+                  <div
+                    className="mt-0.5 text-xs"
+                    style={{ color: 'var(--color-ink-faint)' }}
+                  >
+                    Tap to manage subcategories
+                  </div>
                 </div>
-                <ChevronRight className="text-muted-foreground size-4" aria-hidden />
+                <ChevronRight className="size-4" style={{ color: 'var(--color-ink-faint)' }} aria-hidden />
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -131,7 +153,7 @@ export default function ManageCategoriesPage() {
                     variant="ghost"
                     size="icon"
                     aria-label={`Actions for ${c.name}`}
-                    className="mr-2"
+                    className="mr-2 cursor-pointer rounded-xl"
                   >
                     <MoreVertical className="size-4" />
                   </Button>

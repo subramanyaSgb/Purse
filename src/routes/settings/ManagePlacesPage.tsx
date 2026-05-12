@@ -68,18 +68,31 @@ export default function ManagePlacesPage() {
           <div className="flex w-full items-center gap-3">
             <span
               aria-hidden
-              className="bg-muted text-muted-foreground grid size-9 place-items-center rounded-full"
+              className="grid size-10 place-items-center rounded-2xl"
+              style={{
+                background: 'rgba(255,179,71,0.16)',
+                color: 'var(--color-warn)',
+              }}
             >
-              <MapPin className="size-4" />
+              <MapPin className="size-4.5" strokeWidth={1.8} />
             </span>
             <div className="min-w-0 flex-1">
-              <div className="truncate font-medium">{p.name}</div>
-              <div className="text-muted-foreground truncate text-xs">
-                {p.addressCached ?? `${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`}
+              <div className="text-foreground truncate text-[15px] font-semibold">{p.name}</div>
+              <div
+                className="font-mono mt-0.5 truncate text-[11px]"
+                style={{ color: 'var(--color-ink-faint)' }}
+              >
+                {p.addressCached ?? `${p.lat.toFixed(5)}°N · ${p.lng.toFixed(5)}°E`}
               </div>
             </div>
             {p.lastUsedAt ? null : (
-              <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px] uppercase">
+              <span
+                className="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase"
+                style={{
+                  background: 'var(--color-elevation-subtle)',
+                  color: 'var(--color-ink-faint)',
+                }}
+              >
                 Unused
               </span>
             )}

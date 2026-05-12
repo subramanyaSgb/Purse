@@ -101,7 +101,7 @@ export default function ManageSubcategoriesPage() {
             variant="ghost"
             size="sm"
             onClick={() => navigate('/settings/categories')}
-            className="self-start"
+            className="cursor-pointer self-start rounded-full"
           >
             <ArrowLeft className="mr-1 size-4" /> All categories
           </Button>
@@ -127,19 +127,33 @@ export default function ManageSubcategoriesPage() {
             <div className="flex w-full items-center gap-3">
               <span
                 aria-hidden
-                className="grid size-9 place-items-center rounded-full"
+                className="grid size-10 place-items-center rounded-2xl"
                 style={{ backgroundColor: category.colour, color: '#fff' }}
               >
-                <Icon className="size-4" />
+                <Icon className="size-4.5" strokeWidth={1.8} />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 truncate">
-                  <span className="truncate font-medium">{s.name}</span>
+                  <span className="text-foreground truncate text-[15px] font-semibold">
+                    {s.name}
+                  </span>
                   {archived ? (
-                    <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px] uppercase">
+                    <span
+                      className="rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase"
+                      style={{
+                        background: 'var(--color-elevation-subtle)',
+                        color: 'var(--color-ink-faint)',
+                      }}
+                    >
                       Archived
                     </span>
                   ) : null}
+                </div>
+                <div
+                  className="mt-0.5 text-xs"
+                  style={{ color: 'var(--color-ink-faint)' }}
+                >
+                  under {category.name}
                 </div>
               </div>
             </div>

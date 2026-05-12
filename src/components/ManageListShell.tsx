@@ -79,27 +79,32 @@ export function ManageListShell<T>({
         {filtered.length === 0 ? (
           <p
             role="status"
-            className="text-muted-foreground rounded-md border border-dashed py-10 text-center text-sm"
+            className="text-muted-foreground border-border rounded-2xl border border-dashed py-12 text-center text-sm"
           >
             {emptyMessage}
           </p>
         ) : (
-          <ul className="bg-card divide-y rounded-md border">
-            {filtered.map((item) => {
+          <ul className="bg-card border-border overflow-hidden rounded-2xl border">
+            {filtered.map((item, i) => {
               const key = getKey(item);
               const content = renderItem(item);
+              const rowBorder = i === 0 ? '' : 'border-border/60 border-t';
               if (!onEdit) {
                 // No row-level click handler \xe2\x80\x94 renderItem owns the interior
                 // padding and interactive elements.
-                return <li key={key}>{content}</li>;
+                return (
+                  <li key={key} className={rowBorder}>
+                    {content}
+                  </li>
+                );
               }
               return (
-                <li key={key}>
+                <li key={key} className={rowBorder}>
                   <button
                     type="button"
                     onClick={() => onEdit(item)}
                     className={cn(
-                      'hover:bg-accent focus-visible:ring-ring flex w-full items-center px-4 py-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
+                      'hover:bg-accent focus-visible:ring-ring flex w-full cursor-pointer items-center px-4 py-3.5 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none',
                     )}
                   >
                     {content}
@@ -115,7 +120,7 @@ export function ManageListShell<T>({
         onClick={onAdd}
         size="icon"
         aria-label={addLabel}
-        className="fixed right-4 bottom-20 size-12 rounded-full shadow-lg"
+        className="fixed right-4 bottom-20 size-14 cursor-pointer rounded-full shadow-lg"
       >
         <Plus className="size-5" />
       </Button>

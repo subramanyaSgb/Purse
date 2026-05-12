@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Trash2 } from 'lucide-react';
+import { Hash, Trash2 } from 'lucide-react';
 import { ManageListShell } from '@/components/ManageListShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Sheet,
   SheetContent,
@@ -13,6 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { TxFieldRow } from '@/components/forms/TxFieldRow';
 import { tagsRepo } from '@/repo/tags';
 import type { Tag } from '@/domain/types';
 
@@ -53,9 +53,44 @@ function TagFormBody({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-4 pb-4">
-      <div className="grid gap-2">
-        <Label htmlFor="tag-name">Name</Label>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-4 pb-6">
+      {/* Preview tile — uses a soft warn-tone background to differentiate
+          tags from the categories/payment-methods which carry colour. */}
+      <div className="flex items-center gap-3 pt-2">
+        <span
+          aria-hidden
+          className="grid size-12 place-items-center rounded-2xl"
+          style={{
+            background: 'var(--color-elevation-subtle)',
+            color: 'var(--color-foreground)',
+          }}
+        >
+          <Hash className="size-5" strokeWidth={1.8} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-foreground truncate text-base font-semibold">
+            #{name.trim() || 'new-tag'}
+          </div>
+          {isEdit && initial ? (
+            <div
+              className="mt-0.5 text-xs"
+              style={{ color: 'var(--color-ink-faint)' }}
+            >
+              Used {initial.usageCount} time{initial.usageCount === 1 ? '' : 's'}
+              {onRemove ? '' : ' — rename only'}
+            </div>
+          ) : (
+            <div
+              className="mt-0.5 text-xs"
+              style={{ color: 'var(--color-ink-faint)' }}
+            >
+              Cross-cutting label across transactions
+            </div>
+          )}
+        </div>
+      </div>
+
+      <TxFieldRow label="Name">
         <Input
           id="tag-name"
           value={name}
@@ -64,13 +99,7 @@ function TagFormBody({
           autoFocus
           required
         />
-        {isEdit && initial ? (
-          <p className="text-muted-foreground text-xs">
-            Used {initial.usageCount} time{initial.usageCount === 1 ? '' : 's'}.
-            {onRemove ? '' : ' Tags already on transactions can be renamed but not deleted.'}
-          </p>
-        ) : null}
-      </div>
+      </TxFieldRow>
 
       {error ? (
         <p role="alert" className="text-destructive text-sm">
@@ -88,13 +117,19 @@ function TagFormBody({
               onClose();
             }}
             disabled={saving}
+            className="cursor-pointer gap-2"
+            style={{
+              background: 'rgba(255,136,102,0.10)',
+              borderColor: 'rgba(255,136,102,0.3)',
+              color: 'var(--color-expense)',
+            }}
           >
-            <Trash2 className="mr-2 size-4" />
+            <Trash2 className="size-4" />
             Delete
           </Button>
         ) : null}
-        <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : isEdit ? 'Save' : 'Create'}
+        <Button type="submit" disabled={saving} className="cursor-pointer">
+          {saving ? 'Saving…' : isEdit ? 'Save' : 'Create tag'}
         </Button>
       </SheetFooter>
     </form>
@@ -161,14 +196,26 @@ export default function ManageTagsPage() {
           <div className="flex w-full items-center gap-3">
             <span
               aria-hidden
-              className="bg-muted text-muted-foreground inline-flex h-6 items-center rounded-full px-2 text-xs font-medium"
+              className="grid size-10 place-items-center rounded-2xl"
+              style={{
+                background: 'var(--color-elevation-subtle)',
+                color: 'var(--color-foreground)',
+              }}
             >
-              #{t.name}
+              <Hash className="size-4.5" strokeWidth={1.8} />
             </span>
-            <div className="text-muted-foreground ml-auto text-xs">
-              {t.usageCount === 0
-                ? 'unused'
-                : `${t.usageCount} use${t.usageCount === 1 ? '' : 's'}`}
+            <div className="min-w-0 flex-1">
+              <div className="text-foreground truncate text-[15px] font-semibold">
+                #{t.name}
+              </div>
+              <div
+                className="mt-0.5 text-xs"
+                style={{ color: 'var(--color-ink-faint)' }}
+              >
+                {t.usageCount === 0
+                  ? 'unused'
+                  : `${t.usageCount} use${t.usageCount === 1 ? '' : 's'}`}
+              </div>
             </div>
           </div>
         )}
