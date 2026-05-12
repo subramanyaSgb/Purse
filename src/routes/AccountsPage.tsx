@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { Header } from '@/components/Header';
+import { AccountsInsightChip } from '@/components/AccountsInsightChip';
 import { accountsRepo } from '@/repo/accounts';
 import { useBalances } from '@/state/useBalances';
 import { fmtINR } from '@/lib/format';
@@ -118,6 +119,8 @@ export default function AccountsPage() {
           </div>
         )}
       </section>
+
+      <AccountsInsightChip />
     </>
   );
 }

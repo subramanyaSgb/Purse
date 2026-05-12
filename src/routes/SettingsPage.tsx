@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   ChevronRight,
+  CloudOff,
   CreditCard,
   FolderTree,
   Hash,
@@ -13,31 +15,96 @@ import { BackupSection } from '@/components/BackupSection';
 import { ProfileCard } from '@/components/ProfileCard';
 import { ProfileSection } from '@/components/ProfileSection';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
+import { accountsRepo } from '@/repo/accounts';
+import { categoriesRepo } from '@/repo/categories';
+import { paymentMethodsRepo } from '@/repo/paymentMethods';
+import { placesRepo } from '@/repo/places';
+import { subcategoriesRepo } from '@/repo/subcategories';
+import { tagsRepo } from '@/repo/tags';
 
 type ManageLink = {
   to: string;
   label: string;
   Icon: LucideIcon;
+  count: () => string;
 };
 
-const manageLinks: ManageLink[] = [
-  { to: '/settings/accounts', label: 'Accounts', Icon: Wallet },
-  { to: '/settings/categories', label: 'Categories', Icon: FolderTree },
-  { to: '/settings/tags', label: 'Tags', Icon: Hash },
-  { to: '/settings/payment-methods', label: 'Payment methods', Icon: CreditCard },
-  { to: '/settings/places', label: 'Places', Icon: MapPin },
-];
+function useManageLinks(): ManageLink[] {
+  const { data: accounts = [] } = useQuery({
+    queryKey: ['accounts'],
+    queryFn: () => accountsRepo.list(),
+  });
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesRepo.list(),
+  });
+  const { data: subcategories = [] } = useQuery({
+    queryKey: ['subcategories', 'all'],
+    queryFn: () => subcategoriesRepo.list(),
+  });
+  const { data: tags = [] } = useQuery({
+    queryKey: ['tags'],
+    queryFn: () => tagsRepo.list(),
+  });
+  const { data: methods = [] } = useQuery({
+    queryKey: ['paymentMethods'],
+    queryFn: () => paymentMethodsRepo.list(),
+  });
+  const { data: places = [] } = useQuery({
+    queryKey: ['places'],
+    queryFn: () => placesRepo.list(),
+  });
+
+  return [
+    {
+      to: '/settings/accounts',
+      label: 'Accounts',
+      Icon: Wallet,
+      count: () => `${accounts.length}`,
+    },
+    {
+      to: '/settings/categories',
+      label: 'Categories',
+      Icon: FolderTree,
+      count: () => `${categories.length} + ${subcategories.length} sub`,
+    },
+    {
+      to: '/settings/tags',
+      label: 'Tags',
+      Icon: Hash,
+      count: () => `${tags.length}`,
+    },
+    {
+      to: '/settings/payment-methods',
+      label: 'Payment methods',
+      Icon: CreditCard,
+      count: () => `${methods.length}`,
+    },
+    {
+      to: '/settings/places',
+      label: 'Places',
+      Icon: MapPin,
+      count: () => `${places.length}`,
+    },
+  ];
+}
 
 export default function SettingsPage() {
+  const manageLinks = useManageLinks();
+
   return (
     <>
       <Header title="Settings" large />
       <div className="flex flex-col gap-4 px-4 pb-8">
         <ProfileCard />
 
+        <SettingsGroup title="Look & feel">
+          <ThemeSwitcher />
+        </SettingsGroup>
+
         <SettingsGroup title="Manage data">
           <ul className="bg-card border-border divide-border divide-y rounded-2xl border">
-            {manageLinks.map(({ to, label, Icon }) => (
+            {manageLinks.map(({ to, label, Icon, count }) => (
               <li key={to}>
                 <Link
                   to={to}
@@ -47,6 +114,12 @@ export default function SettingsPage() {
                     <Icon className="size-[15px]" aria-hidden />
                   </span>
                   <span className="flex-1 truncate text-sm font-medium">{label}</span>
+                  <span
+                    className="font-mono shrink-0 text-[11px]"
+                    style={{ color: 'var(--color-muted-foreground)' }}
+                  >
+                    {count()}
+                  </span>
                   <ChevronRight
                     className="size-4 shrink-0"
                     style={{ color: 'var(--color-ink-faint)' }}
@@ -62,11 +135,20 @@ export default function SettingsPage() {
           <ProfileSection />
         </SettingsGroup>
 
-        <SettingsGroup title="Look & feel">
-          <ThemeSwitcher />
-        </SettingsGroup>
-
         <SettingsGroup title="Privacy & backup">
+          <div className="bg-card border-border rounded-2xl border">
+            <div className="border-border flex items-center gap-3 border-b px-4 py-3">
+              <span className="bg-muted text-muted-foreground grid size-8 shrink-0 place-items-center rounded-lg">
+                <CloudOff className="size-[15px]" aria-hidden />
+              </span>
+              <div className="flex-1">
+                <div className="text-sm font-medium">Cloud sync</div>
+                <div className="text-[11px]" style={{ color: 'var(--color-ink-faint)' }}>
+                  Off · by design
+                </div>
+              </div>
+            </div>
+          </div>
           <BackupSection />
         </SettingsGroup>
 
