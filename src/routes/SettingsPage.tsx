@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight, FolderTree, Wallet } from 'lucide-react';
+import { ChevronRight, FolderTree, Hash, Wallet } from 'lucide-react';
 import { Header } from '@/components/Header';
 
 type SettingsLink = {
@@ -21,6 +21,12 @@ const manageLinks: SettingsLink[] = [
     label: 'Categories',
     description: 'Expense and income buckets',
     Icon: FolderTree,
+  },
+  {
+    to: '/settings/tags',
+    label: 'Tags',
+    description: 'Cross-cutting labels',
+    Icon: Hash,
   },
 ];
 

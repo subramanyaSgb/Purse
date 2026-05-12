@@ -12,6 +12,7 @@ import SettingsPage from '@/routes/SettingsPage';
 import ManageAccountsPage from '@/routes/settings/ManageAccountsPage';
 import ManageCategoriesPage from '@/routes/settings/ManageCategoriesPage';
 import ManageSubcategoriesPage from '@/routes/settings/ManageSubcategoriesPage';
+import ManageTagsPage from '@/routes/settings/ManageTagsPage';
 import './index.css';
 
 const router = createBrowserRouter([
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: 'settings/accounts', element: <ManageAccountsPage /> },
       { path: 'settings/categories', element: <ManageCategoriesPage /> },
       { path: 'settings/categories/:id', element: <ManageSubcategoriesPage /> },
+      { path: 'settings/tags', element: <ManageTagsPage /> },
     ],
   },
 ]);

@@ -50,6 +50,22 @@ export const tagsRepo = {
     await db.tags.add(tag);
     return tag;
   },
+  async rename(id: string, newName: string): Promise<Tag> {
+    const existing = await db.tags.get(id);
+    if (!existing) throw new Error(`Tag ${id} not found`);
+    const trimmed = newName.trim();
+    if (!trimmed) throw new Error('Tag name is required');
+    const lower = trimmed.toLowerCase();
+    if (lower !== existing.nameLower) {
+      const collision = await db.tags.where('nameLower').equals(lower).first();
+      if (collision && collision.id !== id) {
+        throw new Error(`A tag named "${trimmed}" already exists`);
+      }
+    }
+    const updated: Tag = { ...existing, name: trimmed, nameLower: lower };
+    await db.tags.put(updated);
+    return updated;
+  },
   async remove(id: string): Promise<void> {
     await db.tags.delete(id);
   },

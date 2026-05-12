@@ -63,4 +63,29 @@ describe('tagsRepo', () => {
     await tagsRepo.remove(t.id);
     expect(await tagsRepo.get(t.id)).toBeNull();
   });
+
+  it('rename() updates name and nameLower', async () => {
+    const t = await tagsRepo.create({ name: 'Food' });
+    const r = await tagsRepo.rename(t.id, 'Snacks');
+    expect(r.name).toBe('Snacks');
+    expect(r.nameLower).toBe('snacks');
+  });
+
+  it('rename() accepts the same name (no-op casing change)', async () => {
+    const t = await tagsRepo.create({ name: 'Food' });
+    const r = await tagsRepo.rename(t.id, 'FOOD');
+    expect(r.name).toBe('FOOD');
+    expect(r.nameLower).toBe('food');
+  });
+
+  it('rename() rejects collision with a different tag', async () => {
+    await tagsRepo.create({ name: 'Food' });
+    const t = await tagsRepo.create({ name: 'Travel' });
+    await expect(tagsRepo.rename(t.id, 'food')).rejects.toThrow(/already exists/i);
+  });
+
+  it('rename() rejects empty name', async () => {
+    const t = await tagsRepo.create({ name: 'Food' });
+    await expect(tagsRepo.rename(t.id, '   ')).rejects.toThrow();
+  });
 });
