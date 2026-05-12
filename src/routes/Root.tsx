@@ -6,6 +6,7 @@ import { useFirstRun } from '@/state/useFirstRun';
 import { AddTransactionSheet } from '@/components/forms/AddTransactionSheet';
 import { SplashScreen } from '@/components/SplashScreen';
 import { TransactionDetailSheet } from '@/components/TransactionDetailSheet';
+import { PwaInstallPrompt, PwaUpdateToast } from '@/components/PwaUpdateToast';
 
 type Tab = { to: string; label: string; Icon: LucideIcon };
 
@@ -96,6 +97,11 @@ export default function Root() {
       {/* Global Detail sheet — opened when a TransactionRow fires
           useUiStore.setDetailTxId(id). */}
       <TransactionDetailSheet />
+
+      {/* PWA chips — service-worker update prompt + install prompt. Both
+          render nothing until the relevant browser event fires. */}
+      <PwaUpdateToast />
+      <PwaInstallPrompt />
     </div>
   );
 }
