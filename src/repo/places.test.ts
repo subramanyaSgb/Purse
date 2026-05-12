@@ -26,13 +26,13 @@ describe('placesRepo', () => {
       lat: 0,
       lng: 0,
     });
-    const b = await placesRepo.create({ name: 'B', lat: 0, lng: 0 });
+    // B's lastUsedAt stays null \xe2\x80\x94 verified by it sorting last below.
+    await placesRepo.create({ name: 'B', lat: 0, lng: 0 });
     const c = await placesRepo.create({ name: 'C', lat: 0, lng: 0 });
 
     await placesRepo.touchLastUsed(c.id);
     await new Promise((r) => setTimeout(r, 5));
     await placesRepo.touchLastUsed(a.id);
-    // b remains lastUsedAt = null
 
     const list = await placesRepo.list();
     expect(list.map((p) => p.name)).toEqual(['A', 'C', 'B']);
