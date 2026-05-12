@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { createElement, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Sheet,
   SheetContent,
@@ -12,9 +11,12 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { ColourPicker } from './ColourPicker';
 import { COLOUR_OPTIONS } from './colourOptions';
 import { IconPicker } from './IconPicker';
+import { TxFieldRow } from './TxFieldRow';
+import { iconByName } from './iconOptions';
 import type { Category, CategoryKind } from '@/domain/types';
 
 export type CategoryFormValues = {
@@ -83,9 +85,28 @@ function CategoryFormBody({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-4 pb-4">
-      <div className="grid gap-2">
-        <Label htmlFor="cat-name">Name</Label>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-4 pb-6">
+      {/* Preview tile — matches how the category renders on /settings/categories */}
+      <div className="flex items-center gap-3 pt-2">
+        <span
+          aria-hidden
+          className="grid size-12 place-items-center rounded-2xl"
+          style={{ background: values.colour, color: '#fff' }}
+        >
+          {createElement(iconByName(values.icon), {
+            className: 'size-5',
+            strokeWidth: 1.8,
+          })}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-foreground truncate text-base font-semibold">
+            {values.name.trim() || 'New category'}
+          </div>
+          <div className="text-muted-foreground mt-0.5 text-xs capitalize">{values.kind}</div>
+        </div>
+      </div>
+
+      <TxFieldRow label="Name">
         <Input
           id="cat-name"
           value={values.name}
@@ -94,36 +115,45 @@ function CategoryFormBody({
           autoFocus
           required
         />
-      </div>
+      </TxFieldRow>
 
-      <div className="grid gap-2">
-        <Label>Kind</Label>
+      <TxFieldRow label="Kind">
         <RadioGroup
           value={values.kind}
           onValueChange={(v) => setValues((s) => ({ ...s, kind: v as CategoryKind }))}
-          className="flex gap-4"
+          className="flex gap-3"
         >
-          <Label className="flex items-center gap-2 font-normal">
-            <RadioGroupItem value="expense" /> Expense
+          <Label
+            htmlFor="kind-expense"
+            className="bg-card border-border flex flex-1 cursor-pointer items-center gap-2 rounded-xl border p-3 font-normal"
+          >
+            <RadioGroupItem id="kind-expense" value="expense" />
+            Expense
           </Label>
-          <Label className="flex items-center gap-2 font-normal">
-            <RadioGroupItem value="income" /> Income
+          <Label
+            htmlFor="kind-income"
+            className="bg-card border-border flex flex-1 cursor-pointer items-center gap-2 rounded-xl border p-3 font-normal"
+          >
+            <RadioGroupItem id="kind-income" value="income" />
+            Income
           </Label>
         </RadioGroup>
-      </div>
+      </TxFieldRow>
 
-      <div className="grid gap-2">
-        <Label>Colour</Label>
-        <ColourPicker
-          value={values.colour}
-          onChange={(c) => setValues((v) => ({ ...v, colour: c }))}
-        />
-      </div>
+      <TxFieldRow label="Colour">
+        <div className="bg-card border-border rounded-xl border p-3">
+          <ColourPicker
+            value={values.colour}
+            onChange={(c) => setValues((v) => ({ ...v, colour: c }))}
+          />
+        </div>
+      </TxFieldRow>
 
-      <div className="grid gap-2">
-        <Label>Icon</Label>
-        <IconPicker value={values.icon} onChange={(i) => setValues((v) => ({ ...v, icon: i }))} />
-      </div>
+      <TxFieldRow label="Icon">
+        <div className="bg-card border-border rounded-xl border p-3">
+          <IconPicker value={values.icon} onChange={(i) => setValues((v) => ({ ...v, icon: i }))} />
+        </div>
+      </TxFieldRow>
 
       {error ? (
         <p role="alert" className="text-destructive text-sm">
@@ -141,13 +171,19 @@ function CategoryFormBody({
               onClose();
             }}
             disabled={saving}
+            className="gap-2"
+            style={{
+              background: 'rgba(255,136,102,0.10)',
+              borderColor: 'rgba(255,136,102,0.3)',
+              color: 'var(--color-expense)',
+            }}
           >
-            <Trash2 className="mr-2 size-4" />
+            <Trash2 className="size-4" />
             Archive
           </Button>
         ) : null}
         <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : isEdit ? 'Save' : 'Create'}
+          {saving ? 'Saving…' : isEdit ? 'Save' : 'Create category'}
         </Button>
       </SheetFooter>
     </form>
@@ -158,7 +194,7 @@ export type CategoryFormProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initial?: Category | null;
-  /** Selected kind toggle on the parent page \xe2\x80\x94 used to default new rows. */
+  /** Selected kind toggle on the parent page — used to default new rows. */
   defaultKind: CategoryKind;
   onSave: (v: CategoryFormValues) => Promise<void> | void;
   onArchive?: () => Promise<void> | void;

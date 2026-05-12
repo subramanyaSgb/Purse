@@ -20,39 +20,8 @@ import {
 import { ColourPicker } from './ColourPicker';
 import { COLOUR_OPTIONS } from './colourOptions';
 import { IconPicker } from './IconPicker';
+import { TxFieldRow } from './TxFieldRow';
 import type { Account, AccountType } from '@/domain/types';
-
-/** Eyebrow-label + content row used inside the AccountForm. Matches the
- *  TxFieldRow pattern from the AddTransactionSheet so every form has the
- *  same vertical rhythm. */
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-baseline gap-2">
-        <span
-          className="text-[11px] font-semibold tracking-wider uppercase"
-          style={{ color: 'var(--color-ink-faint)' }}
-        >
-          {label}
-        </span>
-        {hint ? (
-          <span className="text-[11px]" style={{ color: 'var(--color-ink-faint)' }}>
-            · {hint}
-          </span>
-        ) : null}
-      </div>
-      {children}
-    </div>
-  );
-}
 
 const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
   { value: 'cash', label: 'Cash' },
@@ -181,7 +150,7 @@ function AccountFormBody({
         </div>
       </div>
 
-      <Field label="Name">
+      <TxFieldRow label="Name">
         <Input
           id="acc-name"
           value={values.name}
@@ -190,9 +159,9 @@ function AccountFormBody({
           autoFocus
           required
         />
-      </Field>
+      </TxFieldRow>
 
-      <Field label="Type">
+      <TxFieldRow label="Type">
         <Select
           value={values.type}
           onValueChange={(v) => setValues((s) => ({ ...s, type: v as AccountType }))}
@@ -208,21 +177,21 @@ function AccountFormBody({
             ))}
           </SelectContent>
         </Select>
-      </Field>
+      </TxFieldRow>
 
       {TYPES_WITH_BANK_NAME.has(values.type) ? (
-        <Field label="Bank name" hint="optional">
+        <TxFieldRow label="Bank name" hint="optional">
           <Input
             id="acc-bank"
             value={values.bankName ?? ''}
             onChange={(e) => setValues((v) => ({ ...v, bankName: e.target.value }))}
             placeholder="e.g. HDFC, ICICI"
           />
-        </Field>
+        </TxFieldRow>
       ) : null}
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Currency">
+        <TxFieldRow label="Currency">
           <Input
             id="acc-currency"
             value={values.currency}
@@ -234,8 +203,8 @@ function AccountFormBody({
             }
             maxLength={3}
           />
-        </Field>
-        <Field label="Opening balance">
+        </TxFieldRow>
+        <TxFieldRow label="Opening balance">
           <Input
             id="acc-opening"
             type="number"
@@ -249,23 +218,23 @@ function AccountFormBody({
             }
             className="font-mono tabular"
           />
-        </Field>
+        </TxFieldRow>
       </div>
 
-      <Field label="Colour">
+      <TxFieldRow label="Colour">
         <div className="bg-card border-border rounded-xl border p-3">
           <ColourPicker
             value={values.colour}
             onChange={(c) => setValues((v) => ({ ...v, colour: c }))}
           />
         </div>
-      </Field>
+      </TxFieldRow>
 
-      <Field label="Icon">
+      <TxFieldRow label="Icon">
         <div className="bg-card border-border rounded-xl border p-3">
           <IconPicker value={values.icon} onChange={(i) => setValues((v) => ({ ...v, icon: i }))} />
         </div>
-      </Field>
+      </TxFieldRow>
 
       {error ? (
         <p role="alert" className="text-destructive text-sm">

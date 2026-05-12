@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { createElement, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Sheet,
   SheetContent,
@@ -21,6 +20,8 @@ import {
 import { ColourPicker } from './ColourPicker';
 import { COLOUR_OPTIONS } from './colourOptions';
 import { IconPicker } from './IconPicker';
+import { TxFieldRow } from './TxFieldRow';
+import { iconByName } from './iconOptions';
 import type { PaymentMethod, PaymentMethodKind } from '@/domain/types';
 
 const PM_KINDS: { value: PaymentMethodKind; label: string }[] = [
@@ -31,6 +32,15 @@ const PM_KINDS: { value: PaymentMethodKind; label: string }[] = [
   { value: 'wallet', label: 'Wallet' },
   { value: 'other', label: 'Other' },
 ];
+
+const KIND_LABEL: Record<PaymentMethodKind, string> = {
+  upi: 'UPI',
+  card: 'Card',
+  cash: 'Cash',
+  netbanking: 'Net banking',
+  wallet: 'Wallet',
+  other: 'Other',
+};
 
 export type PaymentMethodFormValues = {
   name: string;
@@ -91,9 +101,30 @@ function PaymentMethodFormBody({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-4 pb-4">
-      <div className="grid gap-2">
-        <Label htmlFor="pm-name">Name</Label>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-4 pb-6">
+      {/* Preview tile — matches /settings/payment-methods row appearance */}
+      <div className="flex items-center gap-3 pt-2">
+        <span
+          aria-hidden
+          className="grid size-12 place-items-center rounded-2xl"
+          style={{ background: values.colour, color: '#fff' }}
+        >
+          {createElement(iconByName(values.icon), {
+            className: 'size-5',
+            strokeWidth: 1.8,
+          })}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-foreground truncate text-base font-semibold">
+            {values.name.trim() || 'New payment method'}
+          </div>
+          <div className="text-muted-foreground mt-0.5 text-xs uppercase">
+            {KIND_LABEL[values.kind]}
+          </div>
+        </div>
+      </div>
+
+      <TxFieldRow label="Name">
         <Input
           id="pm-name"
           value={values.name}
@@ -102,10 +133,9 @@ function PaymentMethodFormBody({
           autoFocus
           required
         />
-      </div>
+      </TxFieldRow>
 
-      <div className="grid gap-2">
-        <Label htmlFor="pm-kind">Kind</Label>
+      <TxFieldRow label="Kind">
         <Select
           value={values.kind}
           onValueChange={(v) => setValues((s) => ({ ...s, kind: v as PaymentMethodKind }))}
@@ -121,20 +151,22 @@ function PaymentMethodFormBody({
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </TxFieldRow>
 
-      <div className="grid gap-2">
-        <Label>Colour</Label>
-        <ColourPicker
-          value={values.colour}
-          onChange={(c) => setValues((v) => ({ ...v, colour: c }))}
-        />
-      </div>
+      <TxFieldRow label="Colour">
+        <div className="bg-card border-border rounded-xl border p-3">
+          <ColourPicker
+            value={values.colour}
+            onChange={(c) => setValues((v) => ({ ...v, colour: c }))}
+          />
+        </div>
+      </TxFieldRow>
 
-      <div className="grid gap-2">
-        <Label>Icon</Label>
-        <IconPicker value={values.icon} onChange={(i) => setValues((v) => ({ ...v, icon: i }))} />
-      </div>
+      <TxFieldRow label="Icon">
+        <div className="bg-card border-border rounded-xl border p-3">
+          <IconPicker value={values.icon} onChange={(i) => setValues((v) => ({ ...v, icon: i }))} />
+        </div>
+      </TxFieldRow>
 
       {error ? (
         <p role="alert" className="text-destructive text-sm">
@@ -152,13 +184,19 @@ function PaymentMethodFormBody({
               onClose();
             }}
             disabled={saving}
+            className="gap-2"
+            style={{
+              background: 'rgba(255,136,102,0.10)',
+              borderColor: 'rgba(255,136,102,0.3)',
+              color: 'var(--color-expense)',
+            }}
           >
-            <Trash2 className="mr-2 size-4" />
+            <Trash2 className="size-4" />
             Archive
           </Button>
         ) : null}
         <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : isEdit ? 'Save' : 'Create'}
+          {saving ? 'Saving…' : isEdit ? 'Save' : 'Create payment method'}
         </Button>
       </SheetFooter>
     </form>

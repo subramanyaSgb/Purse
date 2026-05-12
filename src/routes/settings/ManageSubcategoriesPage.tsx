@@ -151,6 +151,8 @@ export default function ManageSubcategoriesPage() {
         onOpenChange={setOpen}
         initial={editing}
         parentIcon={category.icon}
+        parentColour={category.colour}
+        parentName={category.name}
         onSave={handleSave}
         onArchive={editing && editing.archivedAt === null ? handleArchive : undefined}
       />

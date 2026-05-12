@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { MapPin, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Sheet,
   SheetContent,
@@ -12,6 +11,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { MapView } from '@/components/MapView';
+import { TxFieldRow } from './TxFieldRow';
 import type { Place } from '@/domain/types';
 
 export type PlaceFormValues = {
@@ -98,9 +98,34 @@ function PlaceFormBody({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-4 pb-4">
-      <div className="grid gap-2">
-        <Label htmlFor="place-name">Name</Label>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-4 pb-6">
+      {/* Preview row — pin glyph + name + warn tint, matches how a Place
+          chip renders inside the AddTransactionSheet PlacePicker. */}
+      <div className="flex items-center gap-3 pt-2">
+        <span
+          aria-hidden
+          className="grid size-12 place-items-center rounded-2xl"
+          style={{
+            background: 'rgba(255,179,71,0.16)',
+            color: 'var(--color-warn)',
+          }}
+        >
+          <MapPin className="size-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-foreground truncate text-base font-semibold">
+            {values.name.trim() || 'New place'}
+          </div>
+          <div
+            className="font-mono mt-0.5 truncate text-[11px]"
+            style={{ color: 'var(--color-ink-faint)' }}
+          >
+            {values.lat.toFixed(5)}°N · {values.lng.toFixed(5)}°E
+          </div>
+        </div>
+      </div>
+
+      <TxFieldRow label="Name">
         <Input
           id="place-name"
           value={values.name}
@@ -109,31 +134,28 @@ function PlaceFormBody({
           autoFocus
           required
         />
-      </div>
+      </TxFieldRow>
 
-      <div className="grid gap-2">
-        <Label>Location</Label>
+      <TxFieldRow label="Location" hint="drag the pin or tap the map">
         <MapView
           lat={values.lat}
           lng={values.lng}
           onChange={(lat, lng) => setValues((v) => ({ ...v, lat, lng }))}
         />
-        <div className="text-muted-foreground flex items-center justify-between text-xs">
-          <span>
-            {values.lat.toFixed(5)}, {values.lng.toFixed(5)}
-          </span>
+        <div className="mt-2 flex items-center justify-end">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={useCurrentLocation}
             disabled={gpsLoading}
+            className="gap-1.5"
           >
-            <MapPin className="mr-1 size-4" />
+            <MapPin className="size-4" />
             {gpsLoading ? 'Reading…' : 'Use current GPS'}
           </Button>
         </div>
-      </div>
+      </TxFieldRow>
 
       {error ? (
         <p role="alert" className="text-destructive text-sm">
@@ -151,13 +173,19 @@ function PlaceFormBody({
               onClose();
             }}
             disabled={saving}
+            className="gap-2"
+            style={{
+              background: 'rgba(255,136,102,0.10)',
+              borderColor: 'rgba(255,136,102,0.3)',
+              color: 'var(--color-expense)',
+            }}
           >
-            <Trash2 className="mr-2 size-4" />
+            <Trash2 className="size-4" />
             Delete
           </Button>
         ) : null}
         <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : isEdit ? 'Save' : 'Create'}
+          {saving ? 'Saving…' : isEdit ? 'Save' : 'Create place'}
         </Button>
       </SheetFooter>
     </form>
