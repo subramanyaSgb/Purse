@@ -11,7 +11,7 @@ test('first run seeds and tabs are navigable', async ({ page }) => {
   // Tab labels per the Concierge design: Home / Activity / Accounts / Settings.
   await page.getByRole('link', { name: 'Activity' }).click();
   await expect(page).toHaveURL(/\/transactions$/);
-  await expect(page.getByRole('heading', { name: 'Transactions' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Activity' })).toBeVisible();
 
   await page.getByRole('link', { name: 'Accounts' }).click();
   await expect(page).toHaveURL(/\/accounts$/);
