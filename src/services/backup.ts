@@ -1,5 +1,5 @@
 import { db } from '@/db/db';
-import { imagesService, thumbKeyFor } from './images';
+import { __opfsRoot, imagesService, thumbKeyFor } from './images';
 import type {
   Account,
   AppMeta,
@@ -111,6 +111,174 @@ export function defaultBackupFilename(d: Date = new Date()): string {
   const hh = pad(d.getHours());
   const mm = pad(d.getMinutes());
   return `purse_backup_${y}-${mo}-${da}_${hh}-${mm}.json`;
+}
+
+function base64ToBlob(b64: string, type = 'image/jpeg'): Blob {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type });
+}
+
+export type BackupPreview = {
+  schemaVersion: number;
+  appVersion: string;
+  exportedAt: string;
+  counts: {
+    accounts: number;
+    categories: number;
+    subcategories: number;
+    tags: number;
+    places: number;
+    paymentMethods: number;
+    transactions: number;
+    images: number;
+  };
+};
+
+export class UnsupportedBackupSchemaError extends Error {
+  readonly found: number;
+  constructor(found: number) {
+    super(
+      `Backup uses schema v${found}, this app only supports up to v${CURRENT_BACKUP_SCHEMA}. Update the app first.`,
+    );
+    this.name = 'UnsupportedBackupSchemaError';
+    this.found = found;
+  }
+}
+
+function isBackupFile(x: unknown): x is BackupFile {
+  if (!x || typeof x !== 'object') return false;
+  const o = x as Partial<BackupFile>;
+  return (
+    typeof o.meta === 'object' &&
+    o.meta !== null &&
+    typeof o.meta.schemaVersion === 'number' &&
+    Array.isArray(o.accounts) &&
+    Array.isArray(o.categories) &&
+    Array.isArray(o.subcategories) &&
+    Array.isArray(o.tags) &&
+    Array.isArray(o.places) &&
+    Array.isArray(o.paymentMethods) &&
+    Array.isArray(o.transactions) &&
+    typeof o.images === 'object'
+  );
+}
+
+/**
+ * Parse a JSON string into a BackupFile, validating the schema version.
+ * Throws on shape mismatch or unsupported newer schemas.
+ */
+export function parseBackup(json: string): BackupFile {
+  const parsed: unknown = JSON.parse(json);
+  if (!isBackupFile(parsed)) {
+    throw new Error('That file does not look like a Purse backup.');
+  }
+  if (parsed.meta.schemaVersion > CURRENT_BACKUP_SCHEMA) {
+    throw new UnsupportedBackupSchemaError(parsed.meta.schemaVersion);
+  }
+  return parsed;
+}
+
+export function previewBackup(b: BackupFile): BackupPreview {
+  return {
+    schemaVersion: b.meta.schemaVersion,
+    appVersion: b.meta.appVersion,
+    exportedAt: b.meta.exportedAt,
+    counts: {
+      accounts: b.accounts.length,
+      categories: b.categories.length,
+      subcategories: b.subcategories.length,
+      tags: b.tags.length,
+      places: b.places.length,
+      paymentMethods: b.paymentMethods.length,
+      transactions: b.transactions.length,
+      images: Object.keys(b.images).length,
+    },
+  };
+}
+
+export type ImportMode = 'replace' | 'merge';
+
+/**
+ * Apply a parsed BackupFile to the live database and OPFS.
+ *
+ * - 'replace' first wipes every table (a single readwrite transaction)
+ *   and the txn/ OPFS root, then inserts the file's contents.
+ * - 'merge' uses bulkPut so existing rows with the same id are
+ *   overwritten and new rows are added; non-conflicting existing rows
+ *   are preserved.
+ *
+ * OPFS image bytes are written outside the Dexie transaction because
+ * the File System Access API isn't transactional with IndexedDB. If
+ * an image write fails we still leave the row referencing the key;
+ * loadBlob will throw on access and the UI surfaces a missing-image
+ * empty state in Phase 6 \xe2\x80\x94 acceptable for v0.1.
+ */
+export async function applyBackup(backup: BackupFile, mode: ImportMode): Promise<void> {
+  const tables = [
+    db.accounts,
+    db.categories,
+    db.subcategories,
+    db.tags,
+    db.places,
+    db.paymentMethods,
+    db.transactions,
+    db.appMeta,
+  ];
+  await db.transaction('rw', tables, async () => {
+    if (mode === 'replace') {
+      await Promise.all([
+        db.accounts.clear(),
+        db.categories.clear(),
+        db.subcategories.clear(),
+        db.tags.clear(),
+        db.places.clear(),
+        db.paymentMethods.clear(),
+        db.transactions.clear(),
+        db.appMeta.clear(),
+      ]);
+    }
+    if (backup.appMeta) await db.appMeta.put(backup.appMeta);
+    await db.accounts.bulkPut(backup.accounts);
+    await db.categories.bulkPut(backup.categories);
+    await db.subcategories.bulkPut(backup.subcategories);
+    await db.tags.bulkPut(backup.tags);
+    await db.places.bulkPut(backup.places);
+    await db.paymentMethods.bulkPut(backup.paymentMethods);
+    await db.transactions.bulkPut(backup.transactions);
+  });
+
+  // OPFS images \xe2\x80\x94 outside the Dexie transaction.
+  if (mode === 'replace') {
+    // Wipe every existing txn/<txId> dir. The fake OPFS in tests and the
+    // real OPFS in browsers both accept removeEntry with recursive on the
+    // txn/ folder; we tolerate missing.
+    try {
+      const root = await __opfsRoot();
+      await root.removeEntry('txn', { recursive: true }).catch(() => {});
+    } catch {
+      // ignore
+    }
+  }
+  for (const [key, b64] of Object.entries(backup.images)) {
+    await writeBlobToKey(key, base64ToBlob(b64));
+  }
+}
+
+async function writeBlobToKey(key: string, blob: Blob): Promise<void> {
+  const root = await __opfsRoot();
+  const parts = key.split('/');
+  if (parts.length < 2) throw new Error(`Bad image key: ${key}`);
+  const fileName = parts.pop()!;
+  let dir = root;
+  for (const part of parts) {
+    dir = await dir.getDirectoryHandle(part, { create: true });
+  }
+  const fh = await dir.getFileHandle(fileName, { create: true });
+  const w = await fh.createWritable();
+  await w.write(blob);
+  await w.close();
 }
 
 /**

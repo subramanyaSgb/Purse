@@ -53,6 +53,11 @@ async function getRoot(): Promise<OpfsDir> {
   return real as unknown as OpfsDir;
 }
 
+/** Internal: shared OPFS root used by both imagesService and backup.applyBackup. */
+export function __opfsRoot(): Promise<OpfsDir> {
+  return getRoot();
+}
+
 /**
  * Compress + resize using OffscreenCanvas in production; passthrough when
  * the canvas pipeline isn't available (jsdom in unit tests).
