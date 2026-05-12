@@ -193,3 +193,241 @@ describe('transactionsRepo', () => {
     expect(await transactionsRepo.get(tx.id)).toBeNull();
   });
 });
+
+describe('transactionsRepo.listByRange', () => {
+  async function seed() {
+    // April 30
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 10,
+      currency: 'INR',
+      occurredAt: '2026-04-30T00:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'c1',
+      note: 'last-day-of-april',
+      tagIds: [],
+      images: [],
+    });
+    // May 1, 5, 31
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 20,
+      currency: 'INR',
+      occurredAt: '2026-05-01T08:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'c1',
+      note: 'May the first',
+      tagIds: [],
+      images: [],
+    });
+    await transactionsRepo.create({
+      kind: 'income',
+      amount: 5000,
+      currency: 'INR',
+      occurredAt: '2026-05-05T08:00:00.000Z',
+      accountId: 'a2',
+      categoryId: 'c2',
+      note: 'salary',
+      tagIds: [],
+      images: [],
+    });
+    await transactionsRepo.create({
+      kind: 'transfer',
+      amount: 100,
+      currency: 'INR',
+      occurredAt: '2026-05-15T08:00:00.000Z',
+      accountId: 'a1',
+      toAccountId: 'a2',
+      note: 'move to bank',
+      tagIds: [],
+      images: [],
+    });
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 30,
+      currency: 'INR',
+      occurredAt: '2026-05-31T23:59:00.000Z',
+      accountId: 'a1',
+      categoryId: 'c1',
+      paymentMethodId: 'pm1',
+      note: 'last expense of may',
+      tagIds: [],
+      images: [],
+    });
+    // June 1
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 40,
+      currency: 'INR',
+      occurredAt: '2026-06-01T00:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'c1',
+      note: 'june first',
+      tagIds: [],
+      images: [],
+    });
+  }
+
+  it('returns rows in [start, end), sorted by occurredAt desc', async () => {
+    await seed();
+    const rows = await transactionsRepo.listByRange(
+      '2026-05-01T00:00:00.000Z',
+      '2026-06-01T00:00:00.000Z',
+    );
+    expect(rows).toHaveLength(4);
+    expect(rows[0]!.note).toBe('last expense of may');
+    expect(rows.at(-1)!.note).toBe('May the first');
+  });
+
+  it('end is exclusive', async () => {
+    await seed();
+    const rows = await transactionsRepo.listByRange(
+      '2026-04-30T00:00:00.000Z',
+      '2026-05-01T00:00:00.000Z',
+    );
+    expect(rows.map((r) => r.note)).toEqual(['last-day-of-april']);
+  });
+
+  it('filters by accountId', async () => {
+    await seed();
+    const rows = await transactionsRepo.listByRange(
+      '2026-05-01T00:00:00.000Z',
+      '2026-06-01T00:00:00.000Z',
+      { accountId: 'a2' },
+    );
+    // a2 appears as accountId on the salary row and as toAccountId on the
+    // transfer \xe2\x80\x94 only the salary matches the accountId filter.
+    expect(rows.map((r) => r.note)).toEqual(['salary']);
+  });
+
+  it('filters by kind using compound index path', async () => {
+    await seed();
+    const rows = await transactionsRepo.listByRange(
+      '2026-05-01T00:00:00.000Z',
+      '2026-06-01T00:00:00.000Z',
+      { kind: 'expense' },
+    );
+    expect(rows.map((r) => r.note)).toEqual(['last expense of may', 'May the first']);
+  });
+
+  it('filters by paymentMethodId', async () => {
+    await seed();
+    const rows = await transactionsRepo.listByRange(
+      '2026-05-01T00:00:00.000Z',
+      '2026-06-01T00:00:00.000Z',
+      { paymentMethodId: 'pm1' },
+    );
+    expect(rows.map((r) => r.note)).toEqual(['last expense of may']);
+  });
+
+  it('filters by tagId', async () => {
+    const tag = await tagsRepo.create({ name: 'lunch' });
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 1,
+      currency: 'INR',
+      occurredAt: '2026-05-10T00:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'c1',
+      note: 'tagged',
+      tagIds: [tag.id],
+      images: [],
+    });
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 1,
+      currency: 'INR',
+      occurredAt: '2026-05-11T00:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'c1',
+      note: 'untagged',
+      tagIds: [],
+      images: [],
+    });
+    const rows = await transactionsRepo.listByRange(
+      '2026-05-01T00:00:00.000Z',
+      '2026-06-01T00:00:00.000Z',
+      { tagId: tag.id },
+    );
+    expect(rows.map((r) => r.note)).toEqual(['tagged']);
+  });
+
+  it('search matches note case-insensitively', async () => {
+    await seed();
+    const rows = await transactionsRepo.listByRange(
+      '2026-05-01T00:00:00.000Z',
+      '2026-06-01T00:00:00.000Z',
+      { search: 'MAY' },
+    );
+    expect(rows.map((r) => r.note).sort()).toEqual(['May the first', 'last expense of may'].sort());
+  });
+
+  it('search matches across category name and place name', async () => {
+    await db.categories.add({
+      id: 'cFood',
+      name: 'Food & Drink',
+      kind: 'expense',
+      colour: '#000',
+      icon: 'a',
+      archivedAt: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    await db.places.add({
+      id: 'pTemple',
+      name: 'Tirupati Temple',
+      lat: 13.68,
+      lng: 79.35,
+      addressCached: null,
+      lastUsedAt: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+    });
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 1,
+      currency: 'INR',
+      occurredAt: '2026-05-10T00:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'cFood',
+      note: 'something boring',
+      tagIds: [],
+      images: [],
+    });
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 1,
+      currency: 'INR',
+      occurredAt: '2026-05-11T00:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'c1',
+      placeId: 'pTemple',
+      note: 'whatever',
+      tagIds: [],
+      images: [],
+    });
+
+    const byCat = await transactionsRepo.listByRange(
+      '2026-05-01T00:00:00.000Z',
+      '2026-06-01T00:00:00.000Z',
+      { search: 'food' },
+    );
+    expect(byCat.map((r) => r.note)).toEqual(['something boring']);
+
+    const byPlace = await transactionsRepo.listByRange(
+      '2026-05-01T00:00:00.000Z',
+      '2026-06-01T00:00:00.000Z',
+      { search: 'tirupati' },
+    );
+    expect(byPlace.map((r) => r.note)).toEqual(['whatever']);
+  });
+
+  it('filters compose AND', async () => {
+    await seed();
+    const rows = await transactionsRepo.listByRange(
+      '2026-05-01T00:00:00.000Z',
+      '2026-06-01T00:00:00.000Z',
+      { kind: 'expense', accountId: 'a1', search: 'first' },
+    );
+    expect(rows.map((r) => r.note)).toEqual(['May the first']);
+  });
+});

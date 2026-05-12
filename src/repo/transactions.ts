@@ -1,8 +1,19 @@
 import { db } from '@/db/db';
 import { newId, nowIso } from '@/lib/ids';
-import type { Transaction } from '@/domain/types';
+import type { Transaction, TxKind } from '@/domain/types';
 
 export type CreateTransactionInput = Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>;
+
+export type TxFilters = {
+  accountId?: string;
+  categoryId?: string;
+  subcategoryId?: string;
+  tagId?: string;
+  paymentMethodId?: string;
+  kind?: TxKind;
+  /** case-insensitive substring match against note, place name, category name */
+  search?: string;
+};
 
 function validate(tx: CreateTransactionInput | Transaction): void {
   if (!(tx.amount > 0)) {
@@ -29,6 +40,22 @@ async function validateTags(tagIds: readonly string[]): Promise<void> {
     const t = await db.tags.get(id);
     if (!t) throw new Error(`Tag ${id} not found`);
   }
+}
+
+/**
+ * Fetch the rows in `[start, end)` ordered by occurredAt asc, using the
+ * compound `[kind+occurredAt]` index when a kind filter is set and the
+ * single-column `occurredAt` index otherwise. The Dexie query handles the
+ * date bounds; remaining filters are applied in memory.
+ */
+async function rangeRows(start: string, end: string, kind?: TxKind): Promise<Transaction[]> {
+  if (kind) {
+    return db.transactions
+      .where('[kind+occurredAt]')
+      .between([kind, start], [kind, end], true, false)
+      .toArray();
+  }
+  return db.transactions.where('occurredAt').between(start, end, true, false).toArray();
 }
 
 export const transactionsRepo = {
@@ -62,5 +89,47 @@ export const transactionsRepo = {
   },
   async remove(id: string): Promise<void> {
     await db.transactions.delete(id);
+  },
+  async listByRange(start: string, end: string, filters: TxFilters = {}): Promise<Transaction[]> {
+    const baseRows = await rangeRows(start, end, filters.kind);
+
+    // Cheap in-memory filters first (single column equality).
+    let rows = baseRows.filter((r) => {
+      if (filters.accountId && r.accountId !== filters.accountId) return false;
+      if (filters.categoryId && r.categoryId !== filters.categoryId) return false;
+      if (filters.subcategoryId && r.subcategoryId !== filters.subcategoryId) return false;
+      if (filters.paymentMethodId && r.paymentMethodId !== filters.paymentMethodId) return false;
+      if (filters.tagId && !r.tagIds.includes(filters.tagId)) return false;
+      return true;
+    });
+
+    // search hits note + place.name + category.name; batch-fetch the
+    // referenced rows so we don't issue one get() per result.
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      const placeIds = Array.from(
+        new Set(rows.map((r) => r.placeId).filter((v): v is string => Boolean(v))),
+      );
+      const categoryIds = Array.from(
+        new Set(rows.map((r) => r.categoryId).filter((v): v is string => Boolean(v))),
+      );
+      const [places, categories] = await Promise.all([
+        placeIds.length ? db.places.bulkGet(placeIds) : Promise.resolve([]),
+        categoryIds.length ? db.categories.bulkGet(categoryIds) : Promise.resolve([]),
+      ]);
+      const placeName = new Map<string, string>();
+      for (const p of places) if (p) placeName.set(p.id, p.name.toLowerCase());
+      const categoryName = new Map<string, string>();
+      for (const c of categories) if (c) categoryName.set(c.id, c.name.toLowerCase());
+
+      rows = rows.filter((r) => {
+        if (r.note.toLowerCase().includes(q)) return true;
+        if (r.placeId && placeName.get(r.placeId)?.includes(q)) return true;
+        if (r.categoryId && categoryName.get(r.categoryId)?.includes(q)) return true;
+        return false;
+      });
+    }
+
+    return rows.sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
   },
 };
