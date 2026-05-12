@@ -10,6 +10,7 @@ import TransactionsPage from '@/routes/TransactionsPage';
 import AccountsPage from '@/routes/AccountsPage';
 import SettingsPage from '@/routes/SettingsPage';
 import ManageAccountsPage from '@/routes/settings/ManageAccountsPage';
+import ManageCategoriesPage from '@/routes/settings/ManageCategoriesPage';
 import './index.css';
 
 const router = createBrowserRouter([
@@ -22,6 +23,7 @@ const router = createBrowserRouter([
       { path: 'accounts', element: <AccountsPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'settings/accounts', element: <ManageAccountsPage /> },
+      { path: 'settings/categories', element: <ManageCategoriesPage /> },
     ],
   },
 ]);

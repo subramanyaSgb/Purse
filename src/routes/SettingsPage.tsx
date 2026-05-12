@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight, Wallet } from 'lucide-react';
+import { ChevronRight, FolderTree, Wallet } from 'lucide-react';
 import { Header } from '@/components/Header';
 
 type SettingsLink = {
@@ -15,6 +15,12 @@ const manageLinks: SettingsLink[] = [
     label: 'Accounts',
     description: 'Cash, bank, credit cards',
     Icon: Wallet,
+  },
+  {
+    to: '/settings/categories',
+    label: 'Categories',
+    description: 'Expense and income buckets',
+    Icon: FolderTree,
   },
 ];
 

@@ -89,11 +89,9 @@ export function ManageListShell<T>({
               const key = getKey(item);
               const content = renderItem(item);
               if (!onEdit) {
-                return (
-                  <li key={key} className="px-4 py-3">
-                    {content}
-                  </li>
-                );
+                // No row-level click handler \xe2\x80\x94 renderItem owns the interior
+                // padding and interactive elements.
+                return <li key={key}>{content}</li>;
               }
               return (
                 <li key={key}>
