@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight, CreditCard, FolderTree, Hash, Wallet } from 'lucide-react';
+import { ChevronRight, CreditCard, FolderTree, Hash, MapPin, Wallet } from 'lucide-react';
 import { Header } from '@/components/Header';
 
 type SettingsLink = {
@@ -33,6 +33,12 @@ const manageLinks: SettingsLink[] = [
     label: 'Payment methods',
     description: 'UPI apps, cards, cash',
     Icon: CreditCard,
+  },
+  {
+    to: '/settings/places',
+    label: 'Places',
+    description: 'Saved locations on a map',
+    Icon: MapPin,
   },
 ];
 

@@ -14,6 +14,7 @@ import ManageCategoriesPage from '@/routes/settings/ManageCategoriesPage';
 import ManageSubcategoriesPage from '@/routes/settings/ManageSubcategoriesPage';
 import ManageTagsPage from '@/routes/settings/ManageTagsPage';
 import ManagePaymentMethodsPage from '@/routes/settings/ManagePaymentMethodsPage';
+import ManagePlacesPage from '@/routes/settings/ManagePlacesPage';
 import './index.css';
 
 const router = createBrowserRouter([
@@ -30,6 +31,7 @@ const router = createBrowserRouter([
       { path: 'settings/categories/:id', element: <ManageSubcategoriesPage /> },
       { path: 'settings/tags', element: <ManageTagsPage /> },
       { path: 'settings/payment-methods', element: <ManagePaymentMethodsPage /> },
+      { path: 'settings/places', element: <ManagePlacesPage /> },
     ],
   },
 ]);

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
 
 /* shadcn/ui-compatible design tokens. Reference: https://ui.shadcn.com/docs/theming */
 @theme {
