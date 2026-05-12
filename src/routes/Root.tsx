@@ -1,14 +1,15 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, List, Wallet, Settings as SettingsIcon } from 'lucide-react';
+import { Home, List, Settings as SettingsIcon, Wallet } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFirstRun } from '@/state/useFirstRun';
 
 type Tab = { to: string; label: string; Icon: LucideIcon };
 
+// Labels match the design: "Home / Activity / Accounts / Settings".
 const tabs: Tab[] = [
-  { to: '/', label: 'Dashboard', Icon: LayoutDashboard },
-  { to: '/transactions', label: 'Transactions', Icon: List },
+  { to: '/', label: 'Home', Icon: Home },
+  { to: '/transactions', label: 'Activity', Icon: List },
   { to: '/accounts', label: 'Accounts', Icon: Wallet },
   { to: '/settings', label: 'Settings', Icon: SettingsIcon },
 ];
@@ -40,40 +41,57 @@ export default function Root() {
 
   return (
     <div className="flex h-full flex-col">
-      <main className="flex-1 overflow-y-auto pb-16">
+      <main className="flex-1 overflow-y-auto pb-24">
         <Outlet />
       </main>
+      {/*
+        Concierge tab bar: pill-active style. The icon row sits inside a
+        rounded chip that fills with the lime accent on the active tab.
+        Border-top is a hairline; the gradient + backdrop blur lift the bar
+        slightly off the canvas so content scrolling behind it feels like
+        glass on iOS/Android.
+      */}
       <nav
         aria-label="Primary"
-        className="bg-background fixed inset-x-0 bottom-0 grid h-16 grid-cols-4 border-t pb-[env(safe-area-inset-bottom)]"
+        className="fixed inset-x-0 bottom-0 z-30 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur-xl"
+        style={{
+          background:
+            'linear-gradient(180deg, color-mix(in srgb, var(--color-background) 60%, transparent), color-mix(in srgb, var(--color-background) 96%, transparent) 60%)',
+          borderColor: 'var(--color-border)',
+        }}
       >
-        {tabs.map(({ to, label, Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            className={({ isActive }) =>
-              cn(
-                'relative flex h-full min-h-11 flex-col items-center justify-center gap-0.5 text-xs',
-                isActive ? 'text-primary font-medium' : 'text-muted-foreground',
-              )
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <span
-                  aria-hidden
-                  className={cn(
-                    'bg-primary absolute inset-x-4 top-0 h-0.5 rounded-full transition-opacity',
-                    isActive ? 'opacity-100' : 'opacity-0',
-                  )}
-                />
-                <Icon className="size-5" aria-hidden />
-                <span>{label}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
+        <div className="grid grid-cols-4 px-3 pt-2 pb-3">
+          {tabs.map(({ to, label, Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              className={({ isActive }) =>
+                cn(
+                  'flex min-h-11 flex-col items-center justify-center gap-1 rounded-md text-[10.5px] tracking-wide',
+                  isActive ? 'text-foreground font-semibold' : 'text-muted-foreground font-medium',
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'flex h-7 w-10 items-center justify-center rounded-[13px] transition-all',
+                      isActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground bg-transparent',
+                    )}
+                  >
+                    <Icon className="size-[17px]" strokeWidth={isActive ? 2 : 1.8} aria-hidden />
+                  </span>
+                  <span>{label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
       </nav>
     </div>
   );
