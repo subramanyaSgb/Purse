@@ -1,3 +1,10 @@
+import { Header } from '@/components/Header';
+
 export default function AccountsPage() {
-  return <h1 className="p-4 text-xl font-semibold">Accounts</h1>;
+  return (
+    <>
+      <Header title="Accounts" />
+      <div className="p-4" />
+    </>
+  );
 }

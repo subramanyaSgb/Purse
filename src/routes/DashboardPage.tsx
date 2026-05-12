@@ -1,3 +1,10 @@
+import { Header } from '@/components/Header';
+
 export default function DashboardPage() {
-  return <h1 className="p-4 text-xl font-semibold">Dashboard</h1>;
+  return (
+    <>
+      <Header title="Dashboard" />
+      <div className="p-4" />
+    </>
+  );
 }
