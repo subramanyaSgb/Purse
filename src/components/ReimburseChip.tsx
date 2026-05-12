@@ -34,7 +34,7 @@ export function ReimburseChip() {
 
   return (
     <Link
-      to="/transactions"
+      to={`/transactions?tag=${encodeURIComponent(pendingTag.id)}`}
       className="bg-card border-border mx-4 flex items-center gap-3 rounded-2xl border p-4 transition-colors hover:bg-white/[0.02]"
     >
       <span

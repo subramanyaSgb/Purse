@@ -539,3 +539,104 @@ describe('transactionsRepo.monthlyTotalsByCategory', () => {
     expect(rows).toEqual([{ categoryId: 'cFood', total: 11, count: 1 }]);
   });
 });
+
+describe('transactionsRepo.summary', () => {
+  it('returns zeros when the range is empty', async () => {
+    const s = await transactionsRepo.summary(
+      '2026-05-01T00:00:00.000Z',
+      '2026-06-01T00:00:00.000Z',
+    );
+    expect(s).toEqual({ income: 0, expense: 0, net: 0, incomeCount: 0, expenseCount: 0 });
+  });
+
+  it('aggregates income, expense, and net while excluding transfers', async () => {
+    await transactionsRepo.create({
+      kind: 'income',
+      amount: 50_000,
+      currency: 'INR',
+      occurredAt: '2026-05-10T12:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'cSalary',
+      note: '',
+      tagIds: [],
+      images: [],
+    });
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 1200,
+      currency: 'INR',
+      occurredAt: '2026-05-11T12:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'cFood',
+      note: '',
+      tagIds: [],
+      images: [],
+    });
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 800,
+      currency: 'INR',
+      occurredAt: '2026-05-12T12:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'cFood',
+      note: '',
+      tagIds: [],
+      images: [],
+    });
+    // transfer must be excluded from BOTH income and expense
+    await transactionsRepo.create({
+      kind: 'transfer',
+      amount: 9999,
+      currency: 'INR',
+      occurredAt: '2026-05-13T12:00:00.000Z',
+      accountId: 'a1',
+      toAccountId: 'a2',
+      note: '',
+      tagIds: [],
+      images: [],
+    });
+
+    const s = await transactionsRepo.summary(
+      '2026-05-01T00:00:00.000Z',
+      '2026-06-01T00:00:00.000Z',
+    );
+    expect(s).toEqual({
+      income: 50_000,
+      expense: 2000,
+      net: 48_000,
+      incomeCount: 1,
+      expenseCount: 2,
+    });
+  });
+
+  it('respects inclusive start / exclusive end', async () => {
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 100,
+      currency: 'INR',
+      occurredAt: '2026-05-01T00:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'c',
+      note: 'edge-start',
+      tagIds: [],
+      images: [],
+    });
+    await transactionsRepo.create({
+      kind: 'expense',
+      amount: 200,
+      currency: 'INR',
+      occurredAt: '2026-06-01T00:00:00.000Z',
+      accountId: 'a1',
+      categoryId: 'c',
+      note: 'edge-end',
+      tagIds: [],
+      images: [],
+    });
+    const s = await transactionsRepo.summary(
+      '2026-05-01T00:00:00.000Z',
+      '2026-06-01T00:00:00.000Z',
+    );
+    // start is inclusive (100 counts), end is exclusive (200 does not).
+    expect(s).toEqual({ income: 0, expense: 100, net: -100, incomeCount: 0, expenseCount: 1 });
+  });
+});

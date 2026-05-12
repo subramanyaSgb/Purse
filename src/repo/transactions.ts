@@ -90,6 +90,41 @@ export const transactionsRepo = {
   async remove(id: string): Promise<void> {
     await db.transactions.delete(id);
   },
+  /**
+   * Income / expense / net summary for the range. Transfers are excluded
+   * (they're a balance shuffle between the user's own accounts, not P&L).
+   * Range bounds use the same inclusive-start / exclusive-end as
+   * listByRange.
+   */
+  async summary(
+    start: string,
+    end: string,
+  ): Promise<{
+    income: number;
+    expense: number;
+    net: number;
+    incomeCount: number;
+    expenseCount: number;
+  }> {
+    const rows = await db.transactions
+      .where('occurredAt')
+      .between(start, end, true, false)
+      .toArray();
+    let income = 0;
+    let expense = 0;
+    let incomeCount = 0;
+    let expenseCount = 0;
+    for (const r of rows) {
+      if (r.kind === 'income') {
+        income += r.amount;
+        incomeCount += 1;
+      } else if (r.kind === 'expense') {
+        expense += r.amount;
+        expenseCount += 1;
+      }
+    }
+    return { income, expense, net: income - expense, incomeCount, expenseCount };
+  },
   async monthlyTotalsByCategory(
     monthISO: string /* 'YYYY-MM' */,
   ): Promise<Array<{ categoryId: string; total: number; count: number }>> {

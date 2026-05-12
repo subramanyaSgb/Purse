@@ -3,9 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { transactionsRepo } from '@/repo/transactions';
 import { categoriesRepo } from '@/repo/categories';
 import { fmtINR } from '@/lib/format';
+import { boundsFor } from '@/lib/dateRange';
+import { useUiStore } from '@/state/uiStore';
 
 /**
- * Top-N spend-by-category donut for the current IST month.
+ * Top-N spend-by-category donut for the current dashboardRange.
  *
  * Renders SVG arcs directly (no recharts dependency) — keeps bundle
  * cost low and matches the design's compact card exactly. Top 5
@@ -38,47 +40,40 @@ function buildArcPath(slice: Slice, cumulative: number, total: number): string {
   return `M ${sx} ${sy} A ${R_OUTER} ${R_OUTER} 0 ${large} 1 ${ex} ${ey} L ${ixEnd} ${iyEnd} A ${R_INNER} ${R_INNER} 0 ${large} 0 ${ixStart} ${iyStart} Z`;
 }
 
-function monthISOForNow(): string {
-  const d = new Date();
-  // Use the IST month boundary by reading the IST local year/month from a
-  // shifted Date. monthlyTotalsByCategory itself handles the bound math; we
-  // only need a 'YYYY-MM' string here.
-  const ist = new Date(d.getTime() + 5.5 * 60 * 60 * 1000);
-  return `${ist.getUTCFullYear()}-${String(ist.getUTCMonth() + 1).padStart(2, '0')}`;
-}
-
 export function CategoryDonut() {
-  const monthISO = useMemo(() => monthISOForNow(), []);
-  const { data: totals = [] } = useQuery({
-    queryKey: ['monthly-totals', monthISO],
-    queryFn: () => transactionsRepo.monthlyTotalsByCategory(monthISO),
+  const range = useUiStore((s) => s.dashboardRange);
+  const { start, end } = useMemo(() => boundsFor(range), [range]);
+
+  const { data: txs = [] } = useQuery({
+    queryKey: ['tx-range', start, end, 'donut'],
+    // Pull every txn in range and aggregate locally. Range queries are
+    // index-backed and we already cache by [start, end], so this is cheap
+    // even at high tx volume.
+    queryFn: () => transactionsRepo.listByRange(start, end, { kind: 'expense' }),
   });
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesRepo.list({ includeArchived: true }),
   });
 
-  // monthlyTotalsByCategory mixes income + expense (excludes transfers).
-  // The Dashboard donut is about *spending*, so keep only expense categories.
-  const expenseCategoryIds = useMemo(
-    () => new Set(categories.filter((c) => c.kind === 'expense').map((c) => c.id)),
-    [categories],
-  );
-
   const slices: Slice[] = useMemo(() => {
-    const filtered = totals.filter((t) => expenseCategoryIds.has(t.categoryId));
-    return filtered
-      .map((t) => {
-        const cat = categories.find((c) => c.id === t.categoryId);
+    const sums = new Map<string, number>();
+    for (const t of txs) {
+      if (!t.categoryId) continue;
+      sums.set(t.categoryId, (sums.get(t.categoryId) ?? 0) + t.amount);
+    }
+    return [...sums.entries()]
+      .map(([cid, total]) => {
+        const cat = categories.find((c) => c.id === cid);
         return {
-          id: t.categoryId,
+          id: cid,
           name: cat?.name ?? 'Unknown',
-          total: t.total,
+          total,
           tint: cat?.colour ?? 'var(--color-muted)',
         };
       })
       .sort((a, b) => b.total - a.total);
-  }, [totals, categories, expenseCategoryIds]);
+  }, [txs, categories]);
 
   const grandTotal = slices.reduce((s, x) => s + x.total, 0);
 

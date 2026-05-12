@@ -7,6 +7,7 @@ import { transactionsRepo } from '@/repo/transactions';
 import { HeroBalanceCard } from '@/components/HeroBalanceCard';
 import { AccountsStrip, SectionHead } from '@/components/AccountsStrip';
 import { CategoryDonut } from '@/components/CategoryDonut';
+import { DateRangeChips } from '@/components/DateRangeChips';
 import { ReimburseChip } from '@/components/ReimburseChip';
 import { TransactionRow } from '@/components/TransactionRow';
 import { startOfLastNDaysIST } from '@/lib/dateRange';
@@ -32,6 +33,8 @@ function initialsFor(name: string): string {
 
 export default function DashboardPage() {
   const openAddTx = useUiStore((s) => s.openAddTx);
+  const dashboardRange = useUiStore((s) => s.dashboardRange);
+  const setDashboardRange = useUiStore((s) => s.setDashboardRange);
   const { data: meta } = useQuery({
     queryKey: APP_META_QUERY_KEY,
     queryFn: () => appMetaRepo.get(),
@@ -70,6 +73,10 @@ export default function DashboardPage() {
       </header>
 
       <HeroBalanceCard />
+
+      <div className="mt-4 px-4">
+        <DateRangeChips value={dashboardRange} onChange={setDashboardRange} />
+      </div>
 
       <div className="mt-4">
         <ReimburseChip />

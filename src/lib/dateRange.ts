@@ -67,3 +67,27 @@ export function startOfLastNDaysIST(d: Date, n: number): string {
   const { y, m, day } = istParts(d);
   return fromIstLocal(y, m, day - (n - 1));
 }
+
+/** Range preset → {start, end} pair, shared by Dashboard + Activity. */
+export type DashboardRangePreset = 'thisMonth' | 'last7d' | 'last30d' | 'lastMonth' | 'allTime';
+
+export function boundsFor(
+  preset: DashboardRangePreset,
+  now: Date = new Date(),
+): { start: string; end: string } {
+  switch (preset) {
+    case 'thisMonth':
+      return { start: startOfMonthIST(now), end: endOfMonthIST(now) };
+    case 'last7d':
+      return { start: startOfWeekIST(now), end: endOfWeekIST(now) };
+    case 'last30d':
+      return { start: startOfLastNDaysIST(now, 30), end: new Date().toISOString() };
+    case 'lastMonth': {
+      const lastMonth = new Date(now);
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      return { start: startOfMonthIST(lastMonth), end: endOfMonthIST(lastMonth) };
+    }
+    case 'allTime':
+      return { start: '1970-01-01T00:00:00.000Z', end: new Date(2999, 0).toISOString() };
+  }
+}

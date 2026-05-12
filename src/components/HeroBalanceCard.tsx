@@ -1,36 +1,40 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { transactionsRepo } from '@/repo/transactions';
 import { useBalances } from '@/state/useBalances';
+import { useUiStore, type RangePreset } from '@/state/uiStore';
 import { fmtINR } from '@/lib/format';
-import { startOfMonthIST, endOfMonthIST } from '@/lib/dateRange';
+import { boundsFor } from '@/lib/dateRange';
+
+const RANGE_LABEL: Record<RangePreset, string> = {
+  thisMonth: 'This month',
+  lastMonth: 'Last month',
+  last7d: 'This week',
+  last30d: 'Last 30 days',
+  allTime: 'All time',
+};
 
 /**
- * Hero balance card. Net worth = sum of all account balances (via
- * useBalances). The three stat columns below derive Earned / Spent / Saved
- * from the current month's transactions:
- *   Earned   sum(income.amount)        for the IST month
- *   Spent    sum(expense.amount)       for the IST month
- *   Saved    Earned − Spent
- * Transfers are excluded — they're a balance shuffle, not P&L.
+ * Hero balance card.
+ *
+ * - NET WORTH = sum of every account balance via useBalances (computed-on-read).
+ * - Earned / Spent / Saved derive from transactionsRepo.summary() over the
+ *   currently selected dashboardRange. Transfers are excluded so
+ *   saved = earned − spent makes sense.
  */
 export function HeroBalanceCard() {
+  const range = useUiStore((s) => s.dashboardRange);
   const { balances } = useBalances();
   const netWorth = [...balances.values()].reduce((s, v) => s + v, 0);
 
-  const start = startOfMonthIST(new Date());
-  const end = endOfMonthIST(new Date());
-
-  const { data: monthTxs = [] } = useQuery({
-    queryKey: ['tx-range', start, end],
-    queryFn: () => transactionsRepo.listByRange(start, end),
+  const { start, end } = useMemo(() => boundsFor(range), [range]);
+  const { data: summary } = useQuery({
+    queryKey: ['tx-summary', start, end],
+    queryFn: () => transactionsRepo.summary(start, end),
   });
 
-  let earned = 0;
-  let spent = 0;
-  for (const t of monthTxs) {
-    if (t.kind === 'income') earned += t.amount;
-    else if (t.kind === 'expense') spent += t.amount;
-  }
+  const earned = summary?.income ?? 0;
+  const spent = summary?.expense ?? 0;
   const saved = earned - spent;
 
   return (
@@ -41,7 +45,7 @@ export function HeroBalanceCard() {
           'radial-gradient(140% 100% at 0% 0%, color-mix(in srgb, var(--color-primary) 18%, transparent) 0%, transparent 60%), linear-gradient(155deg, #1A1814 0%, #14120D 50%, #221F18 100%)',
       }}
     >
-      {/* Subtle SVG film grain — pure decoration */}
+      {/* Subtle SVG film grain — decoration only */}
       <svg
         aria-hidden
         className="pointer-events-none absolute inset-0 h-full w-full mix-blend-screen opacity-[0.06]"
@@ -64,7 +68,7 @@ export function HeroBalanceCard() {
           </span>
         </div>
         <span className="text-muted-foreground rounded-full bg-white/5 px-2.5 py-1 text-[11px] font-semibold">
-          This month
+          {RANGE_LABEL[range]}
         </span>
       </div>
 

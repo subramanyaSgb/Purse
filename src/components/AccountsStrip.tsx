@@ -26,7 +26,7 @@ export function AccountsStrip() {
           return (
             <Link
               key={a.id}
-              to="/accounts"
+              to={`/transactions?account=${encodeURIComponent(a.id)}`}
               className="bg-card border-border relative min-w-[170px] overflow-hidden rounded-2xl border p-4 transition-colors hover:bg-white/[0.02]"
             >
               <span

@@ -1,10 +1,12 @@
 import { useDeferredValue, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Filter, Plus, Search } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Input } from '@/components/ui/input';
 import { TransactionRow } from '@/components/TransactionRow';
 import { TransactionFilterSheet } from '@/components/TransactionFilterSheet';
+import { DateRangeChips } from '@/components/DateRangeChips';
 import {
   EMPTY_FILTERS,
   activeFilterCount,
@@ -12,42 +14,10 @@ import {
 } from '@/components/activityFilters';
 import { transactionsRepo, type TxFilters } from '@/repo/transactions';
 import { fmtINR } from '@/lib/format';
-import {
-  endOfMonthIST,
-  startOfLastNDaysIST,
-  startOfMonthIST,
-  startOfWeekIST,
-  endOfWeekIST,
-} from '@/lib/dateRange';
-import { useUiStore, type RangePreset } from '@/state/uiStore';
+import { boundsFor } from '@/lib/dateRange';
+import { useUiStore } from '@/state/uiStore';
 import { cn } from '@/lib/utils';
 import type { Transaction } from '@/domain/types';
-
-const RANGE_CHIPS: { id: RangePreset; label: string }[] = [
-  { id: 'thisMonth', label: 'Month' },
-  { id: 'last7d', label: 'Week' },
-  { id: 'last30d', label: '30 days' },
-  { id: 'lastMonth', label: 'Last month' },
-  { id: 'allTime', label: 'All' },
-];
-
-function boundsFor(preset: RangePreset, now: Date = new Date()): { start: string; end: string } {
-  switch (preset) {
-    case 'thisMonth':
-      return { start: startOfMonthIST(now), end: endOfMonthIST(now) };
-    case 'last7d':
-      return { start: startOfWeekIST(now), end: endOfWeekIST(now) };
-    case 'last30d':
-      return { start: startOfLastNDaysIST(now, 30), end: new Date().toISOString() };
-    case 'lastMonth': {
-      const lastMonth = new Date(now);
-      lastMonth.setMonth(lastMonth.getMonth() - 1);
-      return { start: startOfMonthIST(lastMonth), end: endOfMonthIST(lastMonth) };
-    }
-    case 'allTime':
-      return { start: '1970-01-01T00:00:00.000Z', end: new Date(2999, 0).toISOString() };
-  }
-}
 
 /** Bucket transactions by their IST-local date string for the day-group headers. */
 function groupByDay(txs: Transaction[]): Map<string, Transaction[]> {
@@ -117,11 +87,28 @@ export default function TransactionsPage() {
   const range = useUiStore((s) => s.transactionListRange);
   const setRange = useUiStore((s) => s.setTransactionListRange);
   const openAddTx = useUiStore((s) => s.openAddTx);
+  const [searchParams] = useSearchParams();
 
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
 
-  const [filters, setFilters] = useState<ActivityFilters>(EMPTY_FILTERS);
+  // Deep-link entry points: ReimburseChip and AccountsStrip set search
+  // params like ?tag=<id> and ?account=<id>. We seed the filter state
+  // from those on first render so the user arrives on a pre-filtered
+  // list.
+  const initialFilters: ActivityFilters = useMemo(() => {
+    const f = { ...EMPTY_FILTERS };
+    const tagId = searchParams.get('tag');
+    const accountId = searchParams.get('account');
+    if (tagId) f.tagIds = [tagId];
+    if (accountId) f.accountIds = [accountId];
+    return f;
+    // Intentionally read once at mount; subsequent navigation within the
+    // page is via the filter sheet, not URL.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [filters, setFilters] = useState<ActivityFilters>(initialFilters);
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const activeCount = activeFilterCount(filters);
 
@@ -187,26 +174,8 @@ export default function TransactionsPage() {
       </div>
 
       {/* Range chips */}
-      <div className="scrollbar-hidden flex gap-2 overflow-x-auto px-4 py-3">
-        {RANGE_CHIPS.map((c) => {
-          const on = c.id === range;
-          return (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setRange(c.id)}
-              className={cn(
-                'shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors',
-                on
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-card border-border text-foreground border',
-              )}
-              aria-pressed={on}
-            >
-              {c.label}
-            </button>
-          );
-        })}
+      <div className="px-4 py-3">
+        <DateRangeChips value={range} onChange={setRange} />
       </div>
 
       <div className="flex flex-col gap-3 px-4 pb-28">
