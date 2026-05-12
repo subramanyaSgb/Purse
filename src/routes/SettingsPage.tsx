@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight, CreditCard, FolderTree, Hash, MapPin, Wallet } from 'lucide-react';
 import { Header } from '@/components/Header';
+import { BackupSection } from '@/components/BackupSection';
 import { ProfileSection } from '@/components/ProfileSection';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
@@ -73,6 +74,7 @@ export default function SettingsPage() {
           </ul>
         </section>
         <ThemeSwitcher />
+        <BackupSection />
       </div>
     </>
   );
