@@ -1,12 +1,16 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { LayoutDashboard, List, Wallet, Settings as SettingsIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFirstRun } from '@/state/useFirstRun';
 
-const tabs = [
-  { to: '/', label: 'Dashboard' },
-  { to: '/transactions', label: 'Transactions' },
-  { to: '/accounts', label: 'Accounts' },
-  { to: '/settings', label: 'Settings' },
+type Tab = { to: string; label: string; Icon: LucideIcon };
+
+const tabs: Tab[] = [
+  { to: '/', label: 'Dashboard', Icon: LayoutDashboard },
+  { to: '/transactions', label: 'Transactions', Icon: List },
+  { to: '/accounts', label: 'Accounts', Icon: Wallet },
+  { to: '/settings', label: 'Settings', Icon: SettingsIcon },
 ];
 
 function CenteredSpinner({ label }: { label: string }) {
@@ -39,20 +43,35 @@ export default function Root() {
       <main className="flex-1 overflow-y-auto pb-16">
         <Outlet />
       </main>
-      <nav className="fixed inset-x-0 bottom-0 grid h-16 grid-cols-4 border-t bg-background">
-        {tabs.map((t) => (
+      <nav
+        aria-label="Primary"
+        className="bg-background fixed inset-x-0 bottom-0 grid h-16 grid-cols-4 border-t pb-[env(safe-area-inset-bottom)]"
+      >
+        {tabs.map(({ to, label, Icon }) => (
           <NavLink
-            key={t.to}
-            to={t.to}
-            end={t.to === '/'}
+            key={to}
+            to={to}
+            end={to === '/'}
             className={({ isActive }) =>
               cn(
-                'flex items-center justify-center text-sm',
+                'relative flex h-full min-h-11 flex-col items-center justify-center gap-0.5 text-xs',
                 isActive ? 'text-primary font-medium' : 'text-muted-foreground',
               )
             }
           >
-            {t.label}
+            {({ isActive }) => (
+              <>
+                <span
+                  aria-hidden
+                  className={cn(
+                    'bg-primary absolute inset-x-4 top-0 h-0.5 rounded-full transition-opacity',
+                    isActive ? 'opacity-100' : 'opacity-0',
+                  )}
+                />
+                <Icon className="size-5" aria-hidden />
+                <span>{label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
