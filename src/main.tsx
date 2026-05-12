@@ -11,6 +11,7 @@ import AccountsPage from '@/routes/AccountsPage';
 import SettingsPage from '@/routes/SettingsPage';
 import ManageAccountsPage from '@/routes/settings/ManageAccountsPage';
 import ManageCategoriesPage from '@/routes/settings/ManageCategoriesPage';
+import ManageSubcategoriesPage from '@/routes/settings/ManageSubcategoriesPage';
 import './index.css';
 
 const router = createBrowserRouter([
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
       { path: 'settings', element: <SettingsPage /> },
       { path: 'settings/accounts', element: <ManageAccountsPage /> },
       { path: 'settings/categories', element: <ManageCategoriesPage /> },
+      { path: 'settings/categories/:id', element: <ManageSubcategoriesPage /> },
     ],
   },
 ]);
