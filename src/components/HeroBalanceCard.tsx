@@ -41,14 +41,17 @@ export function HeroBalanceCard() {
     <div
       className="border-border relative mx-4 overflow-hidden rounded-3xl border p-6"
       style={{
+        // Use themed tokens — `--color-hero-{from,mid,to}` swap per
+        // .dark so the gradient stays legible in both modes.
         background:
-          'radial-gradient(140% 100% at 0% 0%, color-mix(in srgb, var(--color-primary) 18%, transparent) 0%, transparent 60%), linear-gradient(155deg, #1A1814 0%, #14120D 50%, #221F18 100%)',
+          'radial-gradient(140% 100% at 0% 0%, color-mix(in srgb, var(--color-primary) 18%, transparent) 0%, transparent 60%), linear-gradient(155deg, var(--color-hero-from) 0%, var(--color-hero-mid) 50%, var(--color-hero-to) 100%)',
       }}
     >
-      {/* Subtle SVG film grain — decoration only */}
+      {/* SVG film grain — only in dark mode. mix-blend-screen on a light
+          canvas darkens the card and undercuts the readability we want. */}
       <svg
         aria-hidden
-        className="pointer-events-none absolute inset-0 h-full w-full mix-blend-screen opacity-[0.06]"
+        className="pointer-events-none absolute inset-0 hidden h-full w-full mix-blend-screen opacity-[0.06] dark:block"
       >
         <filter id="hero-grain">
           <feTurbulence baseFrequency="0.9" numOctaves="2" />
@@ -57,7 +60,10 @@ export function HeroBalanceCard() {
       </svg>
 
       <div className="relative flex items-center justify-between">
-        <div className="flex items-center gap-2 rounded-full bg-white/5 py-1 pr-3 pl-2">
+        <div
+          className="flex items-center gap-2 rounded-full py-1 pr-3 pl-2"
+          style={{ background: 'var(--color-elevation-subtle)' }}
+        >
           <span
             aria-hidden
             className="size-1.5 rounded-full"
@@ -67,7 +73,10 @@ export function HeroBalanceCard() {
             NET WORTH
           </span>
         </div>
-        <span className="text-muted-foreground rounded-full bg-white/5 px-2.5 py-1 text-[11px] font-semibold">
+        <span
+          className="text-muted-foreground rounded-full px-2.5 py-1 text-[11px] font-semibold"
+          style={{ background: 'var(--color-elevation-subtle)' }}
+        >
           {RANGE_LABEL[range]}
         </span>
       </div>
