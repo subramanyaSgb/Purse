@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight, CreditCard, FolderTree, Hash, MapPin, Wallet } from 'lucide-react';
 import { Header } from '@/components/Header';
+import { ProfileSection } from '@/components/ProfileSection';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 
 type SettingsLink = {
   to: string;
@@ -47,6 +49,7 @@ export default function SettingsPage() {
     <>
       <Header title="Settings" />
       <div className="flex flex-col gap-6 p-4">
+        <ProfileSection />
         <section className="flex flex-col gap-2">
           <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             Manage data
@@ -69,6 +72,7 @@ export default function SettingsPage() {
             ))}
           </ul>
         </section>
+        <ThemeSwitcher />
       </div>
     </>
   );
