@@ -6,9 +6,11 @@ import { appMetaRepo } from '@/repo/appMeta';
 import { transactionsRepo } from '@/repo/transactions';
 import { HeroBalanceCard } from '@/components/HeroBalanceCard';
 import { AccountsStrip, SectionHead } from '@/components/AccountsStrip';
+import { CategoryDonut } from '@/components/CategoryDonut';
 import { ReimburseChip } from '@/components/ReimburseChip';
 import { TransactionRow } from '@/components/TransactionRow';
 import { startOfLastNDaysIST } from '@/lib/dateRange';
+import { useUiStore } from '@/state/uiStore';
 
 const APP_META_QUERY_KEY = ['appMeta'] as const;
 
@@ -29,6 +31,7 @@ function initialsFor(name: string): string {
 }
 
 export default function DashboardPage() {
+  const openAddTx = useUiStore((s) => s.openAddTx);
   const { data: meta } = useQuery({
     queryKey: APP_META_QUERY_KEY,
     queryFn: () => appMetaRepo.get(),
@@ -75,6 +78,11 @@ export default function DashboardPage() {
       <AccountsStrip />
 
       <section>
+        <SectionHead title="Where it went" to="/transactions" actionLabel="Drill in" />
+        <CategoryDonut />
+      </section>
+
+      <section>
         <SectionHead title="Recent activity" to="/transactions" actionLabel="See all" />
         {recent.length === 0 ? (
           <p
@@ -92,16 +100,17 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {/* FAB is shared across tx-creating screens — Phase 4 wires the
-          AddTransactionSheet behind it. For now, link to /transactions. */}
-      <Link
-        to="/transactions"
+      {/* Shared FAB — opens the globally-mounted AddTransactionSheet via
+          the UI store. The sheet itself is rendered once in Root.tsx. */}
+      <button
+        type="button"
+        onClick={openAddTx}
         aria-label="Add transaction"
-        className="bg-primary text-primary-foreground fixed right-5 bottom-24 z-20 grid size-14 place-items-center rounded-full shadow-2xl"
-        style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+        className="bg-primary text-primary-foreground fixed right-5 bottom-24 z-20 grid size-14 place-items-center rounded-full"
+        style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.5), 0 0 0 6px rgba(229,238,92,0.08)' }}
       >
         <Plus aria-hidden className="size-6" strokeWidth={2.5} />
-      </Link>
+      </button>
 
       <div className="h-8" />
     </>

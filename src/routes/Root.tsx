@@ -3,6 +3,8 @@ import { Home, List, Settings as SettingsIcon, Wallet } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFirstRun } from '@/state/useFirstRun';
+import { AddTransactionSheet } from '@/components/forms/AddTransactionSheet';
+import { SplashScreen } from '@/components/SplashScreen';
 
 type Tab = { to: string; label: string; Icon: LucideIcon };
 
@@ -14,19 +16,11 @@ const tabs: Tab[] = [
   { to: '/settings', label: 'Settings', Icon: SettingsIcon },
 ];
 
-function CenteredSpinner({ label }: { label: string }) {
-  return (
-    <div role="status" aria-label={label} className="grid h-full place-items-center">
-      <div className="border-muted border-t-primary h-10 w-10 animate-spin rounded-full border-4" />
-    </div>
-  );
-}
-
 export default function Root() {
   const status = useFirstRun();
 
   if (status === 'pending') {
-    return <CenteredSpinner label="Setting up Purse" />;
+    return <SplashScreen />;
   }
   if (status === 'error') {
     return (
@@ -93,6 +87,10 @@ export default function Root() {
           ))}
         </div>
       </nav>
+
+      {/* Global Add/Edit transaction sheet mounted once for the whole app —
+          opened from any page's FAB via useUiStore.openAddTx(). */}
+      <AddTransactionSheet />
     </div>
   );
 }
