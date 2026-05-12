@@ -1,9 +1,15 @@
 import { useDeferredValue, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Filter, Search } from 'lucide-react';
+import { Filter, Plus, Search } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Input } from '@/components/ui/input';
 import { TransactionRow } from '@/components/TransactionRow';
+import { TransactionFilterSheet } from '@/components/TransactionFilterSheet';
+import {
+  EMPTY_FILTERS,
+  activeFilterCount,
+  type ActivityFilters,
+} from '@/components/activityFilters';
 import { transactionsRepo, type TxFilters } from '@/repo/transactions';
 import { fmtINR } from '@/lib/format';
 import {
@@ -49,7 +55,6 @@ function groupByDay(txs: Transaction[]): Map<string, Transaction[]> {
   for (const t of txs) {
     const istMs = new Date(t.occurredAt).getTime() + 5.5 * 60 * 60 * 1000;
     const ist = new Date(istMs);
-    // Format: '2026-05-12' as the stable key, label derived below.
     const key = `${ist.getUTCFullYear()}-${String(ist.getUTCMonth() + 1).padStart(2, '0')}-${String(ist.getUTCDate()).padStart(2, '0')}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(t);
@@ -64,7 +69,6 @@ const dayLabelFormatter = new Intl.DateTimeFormat('en-IN', {
 });
 
 function dayLabel(key: string, today: Date): string {
-  // key = YYYY-MM-DD
   const parts = key.split('-').map(Number) as [number, number, number];
   const [y, m, d] = parts;
   const todayIstMs = today.getTime() + 5.5 * 60 * 60 * 1000;
@@ -77,7 +81,6 @@ function dayLabel(key: string, today: Date): string {
   return dayLabelFormatter.format(new Date(y!, m! - 1, d!));
 }
 
-/** Net (income − expense), transfers excluded, for the day's totals line. */
 function dayNet(txs: Transaction[]): number {
   return txs.reduce((s, t) => {
     if (t.kind === 'income') return s + t.amount;
@@ -86,20 +89,53 @@ function dayNet(txs: Transaction[]): number {
   }, 0);
 }
 
+/**
+ * Phase 4 v0.1 multi-select projection: the repo's TxFilters supports one
+ * id per dimension; the filter sheet allows many. The single 'kind' filter
+ * gets pushed into TxFilters when exactly one kind is selected (still
+ * benefiting from the compound `[kind+occurredAt]` index); other multi-
+ * select filters are applied in memory after the fetch. For tiny N this
+ * is acceptable; a richer repo-level OR filter is a future task.
+ */
+function applyMultiSelect(rows: Transaction[], f: ActivityFilters): Transaction[] {
+  return rows.filter((r) => {
+    if (f.kinds.length > 0 && !f.kinds.includes(r.kind)) return false;
+    if (f.accountIds.length > 0 && !f.accountIds.includes(r.accountId)) return false;
+    if (f.categoryIds.length > 0 && (!r.categoryId || !f.categoryIds.includes(r.categoryId)))
+      return false;
+    if (
+      f.paymentMethodIds.length > 0 &&
+      (!r.paymentMethodId || !f.paymentMethodIds.includes(r.paymentMethodId))
+    )
+      return false;
+    if (f.tagIds.length > 0 && !r.tagIds.some((id) => f.tagIds.includes(id))) return false;
+    return true;
+  });
+}
+
 export default function TransactionsPage() {
   const range = useUiStore((s) => s.transactionListRange);
   const setRange = useUiStore((s) => s.setTransactionListRange);
+  const openAddTx = useUiStore((s) => s.openAddTx);
 
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query);
-  const filters: TxFilters = deferredQuery.trim() ? { search: deferredQuery.trim() } : {};
+
+  const [filters, setFilters] = useState<ActivityFilters>(EMPTY_FILTERS);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const activeCount = activeFilterCount(filters);
+
+  const repoFilters: TxFilters = {};
+  if (deferredQuery.trim()) repoFilters.search = deferredQuery.trim();
+  if (filters.kinds.length === 1) repoFilters.kind = filters.kinds[0];
 
   const { start, end } = useMemo(() => boundsFor(range), [range]);
-  const { data: txs = [], isLoading } = useQuery({
-    queryKey: ['tx-range', start, end, deferredQuery],
-    queryFn: () => transactionsRepo.listByRange(start, end, filters),
+  const { data: rawTxs = [], isLoading } = useQuery({
+    queryKey: ['tx-range', start, end, deferredQuery, JSON.stringify(repoFilters)],
+    queryFn: () => transactionsRepo.listByRange(start, end, repoFilters),
   });
 
+  const txs = useMemo(() => applyMultiSelect(rawTxs, filters), [rawTxs, filters]);
   const groups = useMemo(() => groupByDay(txs), [txs]);
   const today = useMemo(() => new Date(), []);
 
@@ -111,10 +147,22 @@ export default function TransactionsPage() {
         actions={
           <button
             type="button"
-            aria-label="Filters"
-            className="bg-card border-border text-foreground grid size-9 place-items-center rounded-full border"
+            aria-label={activeCount === 0 ? 'Filters' : `Filters (${activeCount} active)`}
+            onClick={() => setFilterSheetOpen(true)}
+            className={cn(
+              'border-border text-foreground relative grid size-9 place-items-center rounded-full border',
+              activeCount === 0 ? 'bg-card' : 'bg-accent',
+            )}
           >
             <Filter className="size-[16px]" aria-hidden />
+            {activeCount > 0 ? (
+              <span
+                aria-hidden
+                className="bg-primary text-primary-foreground tabular absolute -top-1 -right-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold"
+              >
+                {activeCount}
+              </span>
+            ) : null}
           </button>
         }
       />
@@ -161,19 +209,17 @@ export default function TransactionsPage() {
         })}
       </div>
 
-      <div className="flex flex-col gap-3 px-4 pb-12">
+      <div className="flex flex-col gap-3 px-4 pb-28">
         {isLoading ? null : groups.size === 0 ? (
           <p
             role="status"
             className="text-muted-foreground border-border rounded-2xl border border-dashed py-12 text-center text-sm"
           >
-            {deferredQuery.trim()
-              ? `No transactions match "${deferredQuery.trim()}" in this range.`
+            {deferredQuery.trim() || activeCount > 0
+              ? 'No transactions match the current filters.'
               : 'No transactions in this range. Tap + to add one.'}
           </p>
         ) : (
-          // Newest day at top. occurredAt desc inside each group is already
-          // guaranteed by transactionsRepo.listByRange.
           Array.from(groups.entries())
             .sort((a, b) => b[0].localeCompare(a[0]))
             .map(([key, items]) => {
@@ -204,6 +250,24 @@ export default function TransactionsPage() {
             })
         )}
       </div>
+
+      <TransactionFilterSheet
+        open={filterSheetOpen}
+        onOpenChange={setFilterSheetOpen}
+        filters={filters}
+        onApply={setFilters}
+      />
+
+      {/* FAB */}
+      <button
+        type="button"
+        onClick={openAddTx}
+        aria-label="Add transaction"
+        className="bg-primary text-primary-foreground fixed right-5 bottom-24 z-20 grid size-14 place-items-center rounded-full shadow-2xl"
+        style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+      >
+        <Plus className="size-6" strokeWidth={2.5} aria-hidden />
+      </button>
     </>
   );
 }
