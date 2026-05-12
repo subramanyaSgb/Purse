@@ -87,11 +87,8 @@ export function BackupSection() {
   }
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-        Backup
-      </h2>
-      <div className="bg-card flex flex-col gap-3 rounded-md border p-4">
+    <>
+      <div className="bg-card border-border flex flex-col gap-3 rounded-2xl border p-4">
         <p className="text-muted-foreground text-sm">
           A backup is a single JSON file with all your data plus base64-encoded receipt images. Save
           it somewhere safe — cloud drive, email, USB stick — to move between devices or guard
@@ -199,6 +196,6 @@ export function BackupSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </section>
+    </>
   );
 }

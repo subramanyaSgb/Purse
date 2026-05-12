@@ -37,27 +37,22 @@ export function ThemeSwitcher() {
   }
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-        Appearance
-      </h2>
-      <div className="bg-card rounded-md border p-4">
-        <RadioGroup value={meta.theme} onValueChange={handleChange} className="flex flex-col gap-3">
-          {THEMES.map((t) => (
-            <Label
-              key={t.value}
-              htmlFor={`theme-${t.value}`}
-              className="flex items-center gap-3 font-normal"
-            >
-              <RadioGroupItem id={`theme-${t.value}`} value={t.value} />
-              <span className="flex-1">
-                <span className="block font-medium">{t.label}</span>
-                <span className="text-muted-foreground block text-xs">{t.hint}</span>
-              </span>
-            </Label>
-          ))}
-        </RadioGroup>
-      </div>
-    </section>
+    <div className="bg-card border-border rounded-2xl border p-4">
+      <RadioGroup value={meta.theme} onValueChange={handleChange} className="flex flex-col gap-3">
+        {THEMES.map((t) => (
+          <Label
+            key={t.value}
+            htmlFor={`theme-${t.value}`}
+            className="flex items-center gap-3 font-normal"
+          >
+            <RadioGroupItem id={`theme-${t.value}`} value={t.value} />
+            <span className="flex-1">
+              <span className="block font-medium">{t.label}</span>
+              <span className="text-muted-foreground block text-xs">{t.hint}</span>
+            </span>
+          </Label>
+        ))}
+      </RadioGroup>
+    </div>
   );
 }
