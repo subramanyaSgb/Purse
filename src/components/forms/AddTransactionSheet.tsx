@@ -325,6 +325,7 @@ function AddTransactionSheetBody({
               inputMode="decimal"
               step="0.01"
               min="0"
+              aria-label="Exact amount"
               value={Number.isFinite(draft.amount) && draft.amount > 0 ? draft.amount : ''}
               onChange={(e) =>
                 setDraft((d) => ({
