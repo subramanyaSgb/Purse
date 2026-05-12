@@ -34,3 +34,4 @@ test-results/
 # Tooling (agent harness scratch)
 .claude/
 .code-review-graph/
+.scratch/
