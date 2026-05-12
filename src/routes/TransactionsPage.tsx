@@ -263,8 +263,8 @@ export default function TransactionsPage() {
         type="button"
         onClick={openAddTx}
         aria-label="Add transaction"
-        className="bg-primary text-primary-foreground fixed right-5 bottom-24 z-20 grid size-14 place-items-center rounded-full shadow-2xl"
-        style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+        className="bg-primary text-primary-foreground fixed right-5 bottom-24 z-20 grid size-14 place-items-center rounded-full"
+        style={{ boxShadow: '0 10px 30px rgba(0,0,0,0.5), 0 0 0 6px rgba(229,238,92,0.08)' }}
       >
         <Plus className="size-6" strokeWidth={2.5} aria-hidden />
       </button>
