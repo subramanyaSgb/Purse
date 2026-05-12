@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Archive as ArchiveIcon, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -75,6 +75,13 @@ export type AccountFormProps = {
   initial?: Account | null;
   onSave: (values: AccountFormValues) => Promise<void> | void;
   onArchive?: () => Promise<void> | void;
+  /**
+   * Permanently delete the account. Throws "Account has transactions;
+   * archive instead" when the row is still referenced — the form
+   * surfaces that as an inline error and keeps the sheet open so the
+   * user can use Archive instead.
+   */
+  onRemove?: () => Promise<void> | void;
 };
 
 /**
@@ -86,17 +93,24 @@ function AccountFormBody({
   initial,
   onSave,
   onArchive,
+  onRemove,
   onClose,
 }: {
   initial: Account | null;
   onSave: (values: AccountFormValues) => Promise<void> | void;
   onArchive?: () => Promise<void> | void;
+  onRemove?: () => Promise<void> | void;
   onClose: () => void;
 }) {
   const isEdit = !!initial;
   const [values, setValues] = useState<AccountFormValues>(() => initialValuesFor(initial));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Two-tap delete: the first tap reveals an inline confirmation row,
+  // the second tap inside that row actually fires onRemove. Keeps an
+  // irreversible action from being one accidental tap away without
+  // dragging in a confirm-modal-on-sheet.
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -242,8 +256,86 @@ function AccountFormBody({
         </p>
       ) : null}
 
+      {isEdit && confirmDelete ? (
+        <div
+          role="alertdialog"
+          aria-label="Confirm delete account"
+          className="border-border flex flex-col gap-3 rounded-2xl border p-4"
+          style={{ background: 'rgba(255,136,102,0.08)' }}
+        >
+          <div>
+            <div
+              className="text-sm font-semibold"
+              style={{ color: 'var(--color-expense)' }}
+            >
+              Delete this account permanently?
+            </div>
+            <p className="text-muted-foreground mt-1 text-xs">
+              This cannot be undone. If any transactions reference this account, Delete
+              will fail — use Archive instead to hide it without losing history.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmDelete(false)}
+              disabled={saving}
+              className="flex-1 cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={async () => {
+                if (!onRemove) return;
+                setSaving(true);
+                setError(null);
+                try {
+                  await onRemove();
+                  onClose();
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : 'Failed to delete');
+                  setConfirmDelete(false);
+                } finally {
+                  setSaving(false);
+                }
+              }}
+              disabled={saving}
+              className="flex-1 cursor-pointer gap-2"
+              style={{
+                background: 'var(--color-expense)',
+                color: '#fff',
+              }}
+            >
+              <Trash2 className="size-4" />
+              Yes, delete
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
       <SheetFooter className="flex-col gap-2 sm:flex-row">
-        {isEdit && onArchive ? (
+        {isEdit && onRemove && !confirmDelete ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setConfirmDelete(true)}
+            disabled={saving}
+            className="cursor-pointer gap-2"
+            style={{
+              background: 'rgba(255,136,102,0.10)',
+              borderColor: 'rgba(255,136,102,0.3)',
+              color: 'var(--color-expense)',
+            }}
+          >
+            <Trash2 className="size-4" />
+            Delete
+          </Button>
+        ) : null}
+        {isEdit && onArchive && !confirmDelete ? (
           <Button
             type="button"
             variant="outline"
@@ -252,26 +344,30 @@ function AccountFormBody({
               onClose();
             }}
             disabled={saving}
-            className="gap-2"
-            style={{
-              background: 'rgba(255,136,102,0.10)',
-              borderColor: 'rgba(255,136,102,0.3)',
-              color: 'var(--color-expense)',
-            }}
+            className="cursor-pointer gap-2"
           >
-            <Trash2 className="size-4" />
+            <ArchiveIcon className="size-4" />
             Archive
           </Button>
         ) : null}
-        <Button type="submit" disabled={saving}>
-          {saving ? 'Saving…' : isEdit ? 'Save' : 'Create account'}
-        </Button>
+        {!confirmDelete ? (
+          <Button type="submit" disabled={saving} className="cursor-pointer">
+            {saving ? 'Saving…' : isEdit ? 'Save' : 'Create account'}
+          </Button>
+        ) : null}
       </SheetFooter>
     </form>
   );
 }
 
-export function AccountForm({ open, onOpenChange, initial, onSave, onArchive }: AccountFormProps) {
+export function AccountForm({
+  open,
+  onOpenChange,
+  initial,
+  onSave,
+  onArchive,
+  onRemove,
+}: AccountFormProps) {
   const isEdit = !!initial;
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -280,7 +376,7 @@ export function AccountForm({ open, onOpenChange, initial, onSave, onArchive }: 
           <SheetTitle>{isEdit ? 'Edit account' : 'New account'}</SheetTitle>
           <SheetDescription>
             {isEdit
-              ? 'Update the fields below or archive this account.'
+              ? 'Update fields, archive to hide, or delete to remove permanently.'
               : 'Add a new account such as Cash, a bank balance, or a credit card.'}
           </SheetDescription>
         </SheetHeader>
@@ -290,6 +386,7 @@ export function AccountForm({ open, onOpenChange, initial, onSave, onArchive }: 
             initial={initial ?? null}
             onSave={onSave}
             onArchive={onArchive}
+            onRemove={onRemove}
             onClose={() => onOpenChange(false)}
           />
         ) : null}

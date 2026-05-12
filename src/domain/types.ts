@@ -96,6 +96,13 @@ export interface AppMeta {
   defaultTxKind: TxKind;
   theme: Theme;
   gpsEnabled: boolean;
+  /**
+   * User-chosen account display order. Ids listed here render first, in
+   * the listed order; unlisted ids (e.g. newly-created accounts) fall
+   * back to alphabetical. Undefined means "no preference yet, sort by
+   * name everywhere".
+   */
+  accountOrder?: ID[];
   schemaVersion: number;
   appVersion: string;
   createdAt: ISODate;

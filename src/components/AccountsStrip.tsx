@@ -2,10 +2,13 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight } from 'lucide-react';
 import { accountsRepo } from '@/repo/accounts';
+import { appMetaRepo } from '@/repo/appMeta';
 import { useBalances } from '@/state/useBalances';
 import { fmtINR } from '@/lib/format';
+import { sortByOrder } from '@/lib/order';
 
 const ACCOUNTS_QUERY_KEY = ['accounts'] as const;
+const APP_META_QUERY_KEY = ['appMeta'] as const;
 
 /** Horizontal scroll of active accounts with live balances. */
 export function AccountsStrip() {
@@ -13,15 +16,23 @@ export function AccountsStrip() {
     queryKey: ACCOUNTS_QUERY_KEY,
     queryFn: () => accountsRepo.list(),
   });
+  const { data: appMeta } = useQuery({
+    queryKey: APP_META_QUERY_KEY,
+    queryFn: () => appMetaRepo.get(),
+  });
   const { balances } = useBalances();
 
   if (accounts.length === 0) return null;
+
+  // Honour the user-defined order from Manage Accounts. Falls back to
+  // alphabetical for any accounts not yet pinned in accountOrder.
+  const ordered = sortByOrder(accounts, appMeta?.accountOrder);
 
   return (
     <section>
       <SectionHead title="Accounts" to="/settings/accounts" actionLabel="Manage" />
       <div className="scrollbar-hidden flex gap-3 overflow-x-auto px-4 pb-1">
-        {accounts.map((a) => {
+        {ordered.map((a) => {
           const bal = balances.get(a.id) ?? a.openingBalance;
           return (
             <Link
